@@ -8,6 +8,7 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "types": ["vite/client"]
+    "types": ["vite/client", "./types/vite-env"],
+    "typeRoots": ["./node_modules/@types/", "./types", "./node_modules/vite/types", "./node_modules/"]
   }
 }
