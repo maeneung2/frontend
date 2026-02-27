@@ -18,10 +18,15 @@ jobs:
       - name: pnpm build
         run: pnpm run build
    
-      - name: deploy
+      - name: Sync Bucket
         env:
-          AWS_ACCESS_KEY_ID: '$'
-          AWS_SECRET_ACCESS_KEY: '$'
-        run:
-          aws s3 cp --recursive --region ap-northeast-2 dist s3://home.manual
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_EC2_METADATA_DISABLED: true
+        run: |
+          aws s3 sync \
+            --region ap-northeast-2 \
+            build s3://mn.s3.find-bibun.dev \
+            --delete
+        working-directory: ./my-agora-states-client
    
