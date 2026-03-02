@@ -1,12 +1,14 @@
-import { Flex } from "@chakra-ui/react";
+import { BrowserRouter } from "react-router-dom";
+import RootRoute from "./routes/RootRoute.tsx";
+import Provider from "./components/Provider.tsx";
 
 function App() {
   return (
-    <Flex color={"frame"} flexDir={"column"}>
-      test
-      <Flex h={"1000px"}></Flex>
-      test
-    </Flex>
+    <BrowserRouter>
+      <Provider>
+        <RootRoute />
+      </Provider>
+    </BrowserRouter>
   );
 }
 
