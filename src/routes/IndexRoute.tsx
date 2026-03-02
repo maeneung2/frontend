@@ -1,7 +1,8 @@
 import type { RouteObject } from "react-router-dom";
-import IndexPage from "../pages";
-import Page404 from "../pages/Page404.tsx";
-import SchedulePage from "../pages/schedule.tsx";
+import IndexPage from "../pages/mainPage.tsx";
+import MypagePage from "../pages/mypage/mypagePage.tsx";
+import AlarmPage from "../pages/mypage/alarmPage.tsx";
+import MypageEditPage from "../pages/mypage/mypageEditPage.tsx";
 
 const IndexRoute: RouteObject = {
   path: "",
@@ -11,12 +12,16 @@ const IndexRoute: RouteObject = {
       element: <IndexPage />,
     },
     {
-      path: "/schedule",
-      element: <SchedulePage />,
+      path: "/mypage",
+      element: <MypagePage />,
     },
     {
-      path: "/*",
-      element: <Page404 />,
+      path: "/mypage/edit",
+      element: <MypageEditPage />,
+    },
+    {
+      path: "/alarm",
+      element: <AlarmPage />,
     },
   ],
 };
