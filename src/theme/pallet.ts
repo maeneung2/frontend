@@ -1,22 +1,19 @@
-interface Palette {
-  name: string;
-  value: string;
-}
+export const fontPalette: Record<string, string | number> = {
+  mainText: "18px",
+  subText: "12px",
+  mainHeader: "20px",
+};
 
-export const fontPalette: Palette[] = [
-  { name: "mainText", value: "18px" },
-  { name: "subText", value: "12px" },
-  { name: "mainHeader", value: "24px" },
-];
-
-export const colorPalette: Palette[] = [
-  { name: "test1", value: "#FFFFFF" },
-  { name: "test2", value: "#FFFFFF" },
-  { name: "test3", value: "#FFFFFF" },
-  { name: "test4", value: "#FFFFFF" },
-  { name: "test5", value: "#FFFFFF" },
-  { name: "test6", value: "#FFFFFF" },
-  { name: "test7", value: "#FFFFFF" },
-  { name: "test8", value: "#FFFFFF" },
-  { name: "test9", value: "#FFFFFF" },
-];
+export const colorPalette: Record<string, string | number> = {
+  frame: "silver",
+  bgColor: "#FFFFFF",
+  test1: "#FFFFFF",
+  test2: "#FFFFFF",
+  test3: "#FFFFFF",
+  test4: "#FFFFFF",
+  test5: "#FFFFFF",
+  test6: "#FFFFFF",
+  test7: "#FFFFFF",
+  test8: "#FFFFFF",
+  test9: "#FFFFFF",
+};

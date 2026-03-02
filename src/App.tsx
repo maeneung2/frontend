@@ -1,7 +1,15 @@
-import { Flex } from "@chakra-ui/react";
+import { BrowserRouter } from "react-router-dom";
+import RootRoute from "./routes/RootRoute.tsx";
+import Provider from "./components/Provider.tsx";
 
 function App() {
-  return <Flex color={"test1"}>test</Flex>;
+  return (
+    <BrowserRouter>
+      <Provider>
+        <RootRoute />
+      </Provider>
+    </BrowserRouter>
+  );
 }
 
 export default App;

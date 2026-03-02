@@ -1,0 +1,29 @@
+import type { RouteObject } from "react-router-dom";
+import IndexPage from "../pages/mainPage.tsx";
+import MypagePage from "../pages/mypage/mypagePage.tsx";
+import AlarmPage from "../pages/mypage/alarmPage.tsx";
+import MypageEditPage from "../pages/mypage/mypageEditPage.tsx";
+
+const IndexRoute: RouteObject = {
+  path: "",
+  children: [
+    {
+      index: true,
+      element: <IndexPage />,
+    },
+    {
+      path: "/mypage",
+      element: <MypagePage />,
+    },
+    {
+      path: "/mypage/edit",
+      element: <MypageEditPage />,
+    },
+    {
+      path: "/alarm",
+      element: <AlarmPage />,
+    },
+  ],
+};
+
+export default IndexRoute;
