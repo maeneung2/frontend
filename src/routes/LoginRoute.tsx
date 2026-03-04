@@ -3,6 +3,7 @@ import LoginPage from "../pages/login/loginPage.tsx";
 import FindPasswordPage from "../pages/login/findPasswordPage.tsx";
 import FindIdPage from "../pages/login/findIdPage.tsx";
 import SignupPage from "../pages/login/signup/signupPage.tsx";
+import ResetPasswordPage from "../pages/login/resetPasswordPage.tsx";
 
 const IndexRoute: RouteObject = {
   path: "/login",
@@ -22,6 +23,10 @@ const IndexRoute: RouteObject = {
     {
       path: "/login/sign-up",
       element: <SignupPage />,
+    },
+    {
+      path: "/login/reset-password",
+      element: <ResetPasswordPage />,
     },
   ],
 };

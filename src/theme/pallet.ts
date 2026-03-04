@@ -1,19 +1,19 @@
-export const fontPalette: Record<string, string | number> = {
-  mainText: "18px",
-  subText: "12px",
-  mainHeader: "20px",
+export const fontPalette: Record<string, { value: string }> = {
+  mainText: { value: "18px" },
+  subText: { value: "12px" },
+  mainHeader: { value: "20px" },
 };
 
-export const colorPalette: Record<string, string | number> = {
-  frame: "silver",
-  bgColor: "#FFFFFF",
-  test1: "#FFFFFF",
-  test2: "#FFFFFF",
-  test3: "#FFFFFF",
-  test4: "#FFFFFF",
-  test5: "#FFFFFF",
-  test6: "#FFFFFF",
-  test7: "#FFFFFF",
-  test8: "#FFFFFF",
-  test9: "#FFFFFF",
+export const colorPalette: Record<string, { value: string }> = {
+  frame: { value: "#F3F4F6" },
+  bgColor: { value: "#FFFFFF" },
+  primary: { value: "#4F46E5" },
+  secondary: { value: "#7C3AED" },
+  text: { value: "#111827" },
+  subText: { value: "#6B7280" },
+  border: { value: "#E5E7EB" },
+  danger: { value: "#EF4444" },
+  success: { value: "#10B981" },
+  warning: { value: "#F59E0B" },
+  disabled: { value: "#D1D5DB" },
 };

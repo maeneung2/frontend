@@ -3,10 +3,15 @@ import IndexPage from "../pages/mainPage.tsx";
 import MypagePage from "../pages/mypage/mypagePage.tsx";
 import AlarmPage from "../pages/mypage/alarmPage.tsx";
 import MypageEditPage from "../pages/mypage/mypageEditPage.tsx";
+import SplashPage from "../pages/splashPage.tsx";
 
 const IndexRoute: RouteObject = {
   path: "",
   children: [
+    {
+      path: "/splash",
+      element: <SplashPage />,
+    },
     {
       index: true,
       element: <IndexPage />,
