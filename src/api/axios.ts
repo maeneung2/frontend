@@ -8,15 +8,9 @@ export const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().accessToken;
 
-  console.log("[REQ]", config.method, config.url);
-  console.log("[TOKEN]", token);
-
   if (token) {
     config.headers = config.headers ?? {};
     config.headers.Authorization = `Bearer ${token}`;
-    console.log("[AUTH HEADER]", config.headers.Authorization);
-  } else {
-    console.log("[AUTH HEADER] 없음");
   }
 
   return config;
@@ -29,18 +23,8 @@ api.interceptors.response.use(
 
     if (!originalRequest) return Promise.reject(error);
 
-    if (error.response?.status === 401) {
-      useAuthStore.getState().clear();
-
-      if (window.location.pathname !== "/login") {
-        window.location.replace("/login");
-      }
-
-      return Promise.reject(error);
-    }
-
     // 무한 재시도 방지 플래그
-    if (error.response?.status === 403 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
@@ -51,11 +35,11 @@ api.interceptors.response.use(
           refreshToken,
         });
 
-        const newAccessToken = res.data.accessToken;
+        const { accessToken: newAccessToken, refreshToken: newRefreshToken } = res.data;
 
         useAuthStore
           .getState()
-          .setLogin(newAccessToken, refreshToken, useAuthStore.getState().user!);
+          .setLogin(newAccessToken, newRefreshToken, useAuthStore.getState().user!);
 
         // 원래 요청에 새 토큰 붙여서 재시도
         originalRequest.headers = originalRequest.headers ?? {};
@@ -65,6 +49,11 @@ api.interceptors.response.use(
       } catch (refreshError) {
         // refresh 실패하면 로그아웃 처리
         useAuthStore.getState().clear();
+
+        if (window.location.pathname !== "/login") {
+          window.location.replace("/login");
+        }
+
         return Promise.reject(refreshError);
       }
     }

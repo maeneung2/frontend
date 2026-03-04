@@ -12,10 +12,14 @@ const LoginPage = () => {
     <Flex flexDir={"column"} p={4}>
       <Form
         onFinish={async ({ id, password }) => {
-          const res = await api.post("/api/v1/auth/login", { id, password });
-          const { accessToken, refreshToken, user } = res.data;
-          setLogin(accessToken, refreshToken, user);
-          navigate("/");
+          try {
+            const res = await api.post("/api/v1/auth/login", { id, password });
+            const { accessToken, refreshToken, user } = res.data;
+            setLogin(accessToken, refreshToken, user);
+            navigate("/");
+          } catch {
+            alert("아이디 또는 비밀번호를 확인해주세요.");
+          }
         }}
       >
         로그인 페이지

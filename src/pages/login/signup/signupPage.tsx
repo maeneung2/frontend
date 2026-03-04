@@ -22,14 +22,11 @@ const SignupPage = () => {
         alert("비밀번호 불일치");
         return;
       }
-      const res = await api.post("/api/v1/auth", {
-        id,
-        userName,
-        phone,
-        password,
-      });
-      const token = res.data.accessToken;
-      console.log("token", token);
+      try {
+        await api.post("/api/v1/auth", { id, userName, phone, password });
+      } catch {
+        alert("회원가입에 실패했습니다. 다시 시도해주세요.");
+      }
     },
     []
   );
