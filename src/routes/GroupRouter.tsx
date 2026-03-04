@@ -10,8 +10,11 @@ import GroupSettingPage from "../pages/group/setting/groupSettingPage.tsx";
 import GroupScheduleSettingPage from "../pages/group/setting/groupScheduleSettingPage.tsx";
 import GroupUserSettingPage from "../pages/group/setting/groupUserSettingPage.tsx";
 
+import PrivateRoute from "../components/PrivateRoute.tsx";
+
 const GroupRouter: RouteObject = {
   path: "/group",
+  element: <PrivateRoute />,
   children: [
     {
       path: "/group/:group_id",

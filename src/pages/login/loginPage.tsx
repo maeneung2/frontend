@@ -1,19 +1,25 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Form, Input } from "antd";
 import { Button, Flex } from "@chakra-ui/react";
-import axios from "axios";
+import { api } from "../../api/axios.ts";
+import { useAuthStore } from "../../store/authStore.ts";
 
 const LoginPage = () => {
+  const setLogin = useAuthStore((s) => s.setLogin);
+  const navigate = useNavigate();
+
   return (
     <Flex flexDir={"column"} p={4}>
       <Form
         onFinish={async ({ id, password }) => {
-          const res = await axios.post("http://localhost:3000/api/v1/auth/login", {
-            id,
-            password,
-          });
-          const token = res.data.accessToken;
-          console.log("token", token);
+          try {
+            const res = await api.post("/api/v1/auth/login", { id, password });
+            const { accessToken, refreshToken, user } = res.data;
+            setLogin(accessToken, refreshToken, user);
+            navigate("/");
+          } catch {
+            alert("아이디 또는 비밀번호를 확인해주세요.");
+          }
         }}
       >
         로그인 페이지

@@ -4,6 +4,7 @@ import MypagePage from "../pages/mypage/mypagePage.tsx";
 import AlarmPage from "../pages/mypage/alarmPage.tsx";
 import MypageEditPage from "../pages/mypage/mypageEditPage.tsx";
 import SplashPage from "../pages/splashPage.tsx";
+import PrivateRoute from "../components/PrivateRoute.tsx";
 
 const IndexRoute: RouteObject = {
   path: "",
@@ -13,20 +14,25 @@ const IndexRoute: RouteObject = {
       element: <SplashPage />,
     },
     {
-      index: true,
-      element: <IndexPage />,
-    },
-    {
-      path: "/mypage",
-      element: <MypagePage />,
-    },
-    {
-      path: "/mypage/edit",
-      element: <MypageEditPage />,
-    },
-    {
-      path: "/alarm",
-      element: <AlarmPage />,
+      element: <PrivateRoute />,
+      children: [
+        {
+          index: true,
+          element: <IndexPage />,
+        },
+        {
+          path: "/mypage",
+          element: <MypagePage />,
+        },
+        {
+          path: "/mypage/edit",
+          element: <MypageEditPage />,
+        },
+        {
+          path: "/alarm",
+          element: <AlarmPage />,
+        },
+      ],
     },
   ],
 };
