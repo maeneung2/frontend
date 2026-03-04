@@ -20,7 +20,7 @@ const SignupPage = () => {
         alert("비밀번호 불일치");
         return;
       }
-      const res = await axios.post("http://localhost:3000/api/v1/user", {
+      const res = await axios.post("http://localhost:3000/api/v1/auth", {
         userName,
         phone,
         password,

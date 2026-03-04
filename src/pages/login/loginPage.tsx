@@ -8,7 +8,7 @@ const LoginPage = () => {
     <Flex flexDir={"column"} p={4}>
       <Form
         onFinish={async ({ id, password }) => {
-          const res = await axios.post("http://localhost:3000/api/v1/user/login", {
+          const res = await axios.post("http://localhost:3000/api/v1/auth/login", {
             id,
             password,
           });
