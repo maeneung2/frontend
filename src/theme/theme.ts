@@ -1,15 +1,13 @@
 import { createSystem, defaultConfig, defineConfig } from "@chakra-ui/react";
 import { colorPalette, fontPalette } from "./pallet.ts";
 
-const config = () => {
-  return defineConfig({
-    theme: {
-      tokens: {
-        fonts: fontPalette as never,
-        colors: colorPalette as never,
-      },
+const config = defineConfig({
+  theme: {
+    tokens: {
+      fonts: fontPalette,
+      colors: colorPalette,
     },
-  });
-};
+  },
+});
 
-export const system = createSystem(defaultConfig, config());
+export const system = createSystem(defaultConfig, config);
