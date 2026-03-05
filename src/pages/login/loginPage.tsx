@@ -4,9 +4,20 @@ import { Button, Flex } from "@chakra-ui/react";
 import { api } from "../../api/axios.ts";
 import { useAuthStore } from "../../store/authStore.ts";
 
+const SOCIAL_PROVIDERS = [
+  { key: "google", label: "Google" },
+  { key: "kakao", label: "Kakao" },
+  { key: "naver", label: "Naver" },
+  { key: "apple", label: "Apple" },
+] as const;
+
 const LoginPage = () => {
   const setLogin = useAuthStore((s) => s.setLogin);
   const navigate = useNavigate();
+
+  const handleSocialLogin = (provider: string) => {
+    window.location.assign(`${import.meta.env.VITE_API_URL}/oauth/${provider}`);
+  };
 
   return (
     <Form
@@ -38,6 +49,13 @@ const LoginPage = () => {
           </Flex>
         </Form.Item>
         <Button type={"submit"}>로그인</Button>
+        <Flex flexDir={"column"} gap={2} mt={4}>
+          {SOCIAL_PROVIDERS.map(({ key, label }) => (
+            <Button key={key} onClick={() => handleSocialLogin(key)}>
+              {label}로 로그인
+            </Button>
+          ))}
+        </Flex>
       </Flex>
     </Form>
   );

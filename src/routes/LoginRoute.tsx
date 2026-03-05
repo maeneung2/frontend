@@ -4,6 +4,7 @@ import FindPasswordPage from "../pages/login/findPasswordPage.tsx";
 import FindIdPage from "../pages/login/findIdPage.tsx";
 import SignupPage from "../pages/login/signup/signupPage.tsx";
 import ResetPasswordPage from "../pages/login/resetPasswordPage.tsx";
+import SocialCallbackPage from "../pages/login/socialCallbackPage.tsx";
 import PublicRoute from "../components/PublicRoute.tsx";
 
 const IndexRoute: RouteObject = {
@@ -29,6 +30,10 @@ const IndexRoute: RouteObject = {
     {
       path: "/login/reset-password",
       element: <ResetPasswordPage />,
+    },
+    {
+      path: "/login/social",
+      element: <SocialCallbackPage />,
     },
   ],
 };
