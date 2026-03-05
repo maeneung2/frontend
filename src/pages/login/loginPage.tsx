@@ -8,7 +8,7 @@ const SOCIAL_PROVIDERS = [
   { key: "google", label: "Google" },
   { key: "kakao", label: "Kakao" },
   { key: "naver", label: "Naver" },
-  { key: "apple", label: "Apple" },
+  // { key: "apple", label: "Apple" },
 ] as const;
 
 const LoginPage = () => {
