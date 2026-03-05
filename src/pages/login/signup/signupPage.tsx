@@ -1,9 +1,14 @@
 import { Button, Flex } from "@chakra-ui/react";
 import { Form, Input } from "antd";
 import { useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "../../../api/axios";
+import { useAuthStore } from "../../../store/authStore.ts";
 
 const SignupPage = () => {
+  const setLogin = useAuthStore((s) => s.setLogin);
+  const navigate = useNavigate();
+
   const handleSignup = useCallback(
     async ({
       id,
@@ -23,12 +28,16 @@ const SignupPage = () => {
         return;
       }
       try {
-        await api.post("/api/v1/auth", { id, userName, phone, password });
+        const res = await api.post("/api/v1/auth", { id, userName, phone, password });
+        const { accessToken, refreshToken, user } = res.data;
+
+        setLogin(accessToken, refreshToken, user);
+        navigate("/");
       } catch {
         alert("회원가입에 실패했습니다. 다시 시도해주세요.");
       }
     },
-    []
+    [setLogin, navigate]
   );
 
   return (
