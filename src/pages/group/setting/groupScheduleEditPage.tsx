@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Flex } from "@chakra-ui/react";
 import { Button, Typography } from "antd";
-import { FullscreenExitOutlined, FullscreenOutlined } from "@ant-design/icons";
+import { FullscreenOutlined } from "@ant-design/icons";
 import { useParams } from "react-router-dom";
 import { Dayjs } from "dayjs";
 import { api } from "../../../api/axios";
@@ -10,6 +10,7 @@ import ScheduleHeader from "../../../components/schedule/ScheduleHeader";
 import WorkTypeSelector from "../../../components/schedule/WorkTypeSelector";
 import ScheduleTable from "../../../components/schedule/ScheduleTable";
 import ScheduleActionBar from "../../../components/schedule/ScheduleActionBar";
+import ScheduleFullscreenOverlay from "../../../components/schedule/ScheduleFullscreenOverlay";
 
 const { Title } = Typography;
 
@@ -35,8 +36,13 @@ const GroupScheduleEditPage = () => {
       const data: InitData = res.data.data;
       setInitData(data);
       setSchedule(data.workers.map(() => Array(data.numDays).fill(0)));
-    } catch {
-      alert("초기 데이터 로드에 실패했습니다.");
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 409) {
+        alert("해당 월의 스케줄이 이미 존재합니다.");
+      } else {
+        alert("초기 데이터 로드에 실패했습니다.");
+      }
     } finally {
       setInitLoading(false);
     }
@@ -60,10 +66,7 @@ const GroupScheduleEditPage = () => {
         localStorage.setItem(key, JSON.stringify(schedule));
       }
 
-      const members = initData.workers.map((w, i) => ({
-        ...w,
-        isNight: i >= 2,
-      }));
+      const members = initData.workers.map((w, i) => ({ ...w, isNight: i >= 2 }));
       const res = await api.post(`/api/v1/schedule/preview`, {
         groupId: group_id,
         date: date.format("YYYY-MM-01"),
@@ -144,11 +147,7 @@ const GroupScheduleEditPage = () => {
                 style={{ flexShrink: 0 }}
               />
             </Flex>
-            <ScheduleTable
-              initData={initData}
-              schedule={schedule}
-              onCellClick={handleCellClick}
-            />
+            <ScheduleTable initData={initData} schedule={schedule} onCellClick={handleCellClick} />
             <ScheduleActionBar
               isGenerated={isGenerated}
               generateLoading={generateLoading}
@@ -162,48 +161,17 @@ const GroupScheduleEditPage = () => {
       </Flex>
 
       {fullscreen && initData && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 9999,
-            background: "white",
-            overflow: "hidden",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              width: "100vh",
-              height: "100vw",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%) rotate(90deg)",
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-              padding: 12,
-              boxSizing: "border-box",
-              overflow: "hidden",
-            }}
-          >
-            <Flex justify={"space-between"} align={"center"} flexShrink={0}>
-              <WorkTypeSelector selectedType={selectedType} onSelect={setSelectedType} />
-              <Button
-                icon={<FullscreenExitOutlined />}
-                onClick={() => setFullscreen(false)}
-                size="middle"
-                style={{ flexShrink: 0 }}
-              />
-            </Flex>
-            <ScheduleTable
-              initData={initData}
-              schedule={schedule}
-              onCellClick={handleCellClick}
-              cellSize={44}
-            />
-          </div>
-        </div>
+        <ScheduleFullscreenOverlay onClose={() => setFullscreen(false)}>
+          <Flex justify={"space-between"} align={"center"} flexShrink={0}>
+            <WorkTypeSelector selectedType={selectedType} onSelect={setSelectedType} />
+          </Flex>
+          <ScheduleTable
+            initData={initData}
+            schedule={schedule}
+            onCellClick={handleCellClick}
+            cellSize={44}
+          />
+        </ScheduleFullscreenOverlay>
       )}
     </>
   );

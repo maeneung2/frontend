@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { Flex } from "@chakra-ui/react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Button, Modal, Spin } from "antd";
+import { Button, Modal, Spin, Typography } from "antd";
 import { api } from "../../api/axios";
 import { useAuthStore } from "../../store/authStore";
+import MyScheduleSection from "../../components/group/MyScheduleSection";
+
+const { Title } = Typography;
 
 interface GroupData {
   groupId: string;
@@ -22,7 +25,8 @@ const GroupMainPage = () => {
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
-    api.get(`/api/v1/group/${group_id}`)
+    api
+      .get(`/api/v1/group/${group_id}`)
       .then((res) => setGroup(res.data.data))
       .catch(() => setGroup(null))
       .finally(() => setLoading(false));
@@ -48,22 +52,29 @@ const GroupMainPage = () => {
   };
 
   if (loading) return <Spin fullscreen />;
-
   if (!group) return <Flex>그룹을 찾을 수 없습니다.</Flex>;
 
   const isOwner = user?.id === group.owner;
 
   return (
-    <Flex flexDir={"column"}>
-      {group.groupName}
-      <Link to={`/group/${group_id}/notice`}>공지사항 페이지</Link>
-      <Link to={`/group/${group_id}/note`}>인수인계 페이지</Link>
-      <Link to={`/group/${group_id}/setting`}>그룹 설정 페이지</Link>
-      {isOwner && (
-        <Button danger loading={deleteLoading} onClick={handleDelete}>
-          그룹 삭제하기
-        </Button>
-      )}
+    <Flex flexDir={"column"} gap={4} p={4}>
+      <Flex justify={"space-between"} align={"center"}>
+        <Title level={4} style={{ margin: 0 }}>
+          {group.groupName}
+        </Title>
+        <Flex gap={2}>
+          <Link to={`/group/${group_id}/notice`}>공지사항</Link>
+          <Link to={`/group/${group_id}/note`}>인수인계</Link>
+          <Link to={`/group/${group_id}/setting`}>설정</Link>
+          {isOwner && (
+            <Button danger size="small" loading={deleteLoading} onClick={handleDelete}>
+              그룹 삭제
+            </Button>
+          )}
+        </Flex>
+      </Flex>
+
+      <MyScheduleSection groupId={group_id!} />
     </Flex>
   );
 };

@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Flex } from "@chakra-ui/react";
 import { Button, Typography, Spin } from "antd";
-import { FullscreenExitOutlined, FullscreenOutlined } from "@ant-design/icons";
+import { FullscreenOutlined } from "@ant-design/icons";
 import { useParams } from "react-router-dom";
 import dayjs from "dayjs";
 import { api } from "../../../api/axios";
 import type { InitData } from "../../../components/schedule/scheduleTypes";
 import ScheduleTable from "../../../components/schedule/ScheduleTable";
+import ScheduleFullscreenOverlay from "../../../components/schedule/ScheduleFullscreenOverlay";
 
 const { Title, Text } = Typography;
 
@@ -96,52 +97,16 @@ const GroupScheduleDetailPage = () => {
               생성일: {dayjs(detail.createdAt).format("YYYY-MM-DD HH:mm")}
             </Text>
           </Flex>
-          <Button
-            icon={<FullscreenOutlined />}
-            onClick={() => setFullscreen(true)}
-            size="middle"
-          />
+          <Button icon={<FullscreenOutlined />} onClick={() => setFullscreen(true)} size="middle" />
         </Flex>
 
         <ScheduleTable initData={initData} schedule={detail.schedule} />
       </Flex>
 
       {fullscreen && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 9999,
-            background: "white",
-            overflow: "hidden",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              width: "100vh",
-              height: "100vw",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%) rotate(90deg)",
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-              padding: 12,
-              boxSizing: "border-box",
-              overflow: "hidden",
-            }}
-          >
-            <Flex justify={"flex-end"} flexShrink={0}>
-              <Button
-                icon={<FullscreenExitOutlined />}
-                onClick={() => setFullscreen(false)}
-                size="middle"
-              />
-            </Flex>
-            <ScheduleTable initData={initData} schedule={detail.schedule} cellSize={44} />
-          </div>
-        </div>
+        <ScheduleFullscreenOverlay onClose={() => setFullscreen(false)}>
+          <ScheduleTable initData={initData} schedule={detail.schedule} cellSize={44} />
+        </ScheduleFullscreenOverlay>
       )}
     </>
   );

@@ -20,8 +20,7 @@ const Provider = ({ children }: { children: ReactNode | ReactNode[] }) => {
     return () => mq.removeEventListener("change", handler);
   }, []);
 
-  const isDark =
-    preference === "dark" || (preference === "system" && systemDark);
+  const isDark = preference === "dark" || (preference === "system" && systemDark);
   const colorMode = isDark ? "dark" : "light";
 
   return (

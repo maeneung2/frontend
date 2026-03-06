@@ -1,26 +1,21 @@
 import { useState } from "react";
 import { Flex, Text } from "@chakra-ui/react";
-import { Switch, Modal, Form, Input, Button } from "antd";
+import { Switch } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { useThemeStore } from "../store/themeStore";
 import { api } from "../api/axios";
+import CreateGroupModal from "../components/group/CreateGroupModal";
 
 const IndexPage = () => {
   const clear = useAuthStore((s) => s.clear);
-  const setLogin = useAuthStore((s) => s.setLogin);
   const refreshToken = useAuthStore((s) => s.refreshToken);
   const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
   const { preference, setPreference } = useThemeStore();
   const [open, setOpen] = useState(false);
-  const [form] = Form.useForm();
 
   const isDark = preference === "dark";
-
-  const handleToggle = (checked: boolean) => {
-    setPreference(checked ? "dark" : "light");
-  };
 
   const handleLogout = async () => {
     try {
@@ -31,27 +26,12 @@ const IndexPage = () => {
     }
   };
 
-  const handleCreateGroup = async (values: { groupName: string }) => {
-    try {
-      const res = await api.post("/api/v1/group", values);
-      const groupId = res.data.data.groupId;
-      const meRes = await api.get("/api/v1/user/me");
-      const { accessToken, refreshToken: rt } = useAuthStore.getState();
-      setLogin(accessToken!, rt!, meRes.data);
-      form.resetFields();
-      setOpen(false);
-      navigate(`/group/${groupId}`);
-    } catch {
-      alert("그룹 생성에 실패했습니다.");
-    }
-  };
-
   return (
     <Flex flexDir={"column"}>
       메인 페이지
       <Switch
         checked={isDark}
-        onChange={handleToggle}
+        onChange={(checked) => setPreference(checked ? "dark" : "light")}
         checkedChildren="🌙"
         unCheckedChildren="☀️"
       />
@@ -61,28 +41,11 @@ const IndexPage = () => {
       {user?.groupId && (
         <Link to={`/group/${user.groupId}/note/default_note_id`}>인수인계 페이지</Link>
       )}
-      {!user?.groupId && <Button onClick={() => setOpen(true)}>그룹 추가</Button>}
+      {!user?.groupId && <button onClick={() => setOpen(true)}>그룹 추가</button>}
       <Text cursor={"pointer"} onClick={handleLogout}>
         로그아웃
       </Text>
-      <Modal
-        title="그룹 생성"
-        open={open}
-        onCancel={() => setOpen(false)}
-        onOk={() => form.submit()}
-        okText="생성"
-        cancelText="취소"
-      >
-        <Form form={form} layout="vertical" onFinish={handleCreateGroup}>
-          <Form.Item
-            name="groupName"
-            label="그룹 이름"
-            rules={[{ required: true, message: "그룹 이름을 입력해주세요." }]}
-          >
-            <Input />
-          </Form.Item>
-        </Form>
-      </Modal>
+      <CreateGroupModal open={open} onClose={() => setOpen(false)} />
     </Flex>
   );
 };

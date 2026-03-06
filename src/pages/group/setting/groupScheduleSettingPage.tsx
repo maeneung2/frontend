@@ -21,22 +21,21 @@ const GroupScheduleSettingPage = () => {
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const fetchSchedules = async () => {
-    setLoading(true);
-    try {
-      const res = await api.get("/api/v1/schedule", {
-        params: { groupId: group_id },
-      });
-      setSchedules(res.data.data);
-    } catch {
-      alert("스케줄 목록을 불러오는데 실패했습니다.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchSchedules();
+    const fetchSchedules = async () => {
+      setLoading(true);
+      try {
+        const res = await api.get("/api/v1/schedule", {
+          params: { groupId: group_id },
+        });
+        setSchedules(res.data.data);
+      } catch {
+        alert("스케줄 목록을 불러오는데 실패했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    void fetchSchedules();
   }, [group_id]);
 
   const handleDelete = async (id: string) => {

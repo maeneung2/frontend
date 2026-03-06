@@ -18,7 +18,13 @@ export interface InitData {
 
 export type WorkType = 0 | 1 | 2 | 3 | 4 | 5;
 
-export const WORK_TYPES: { value: WorkType; label: string; short: string; color: string; bg: string }[] = [
+export const WORK_TYPES: {
+  value: WorkType;
+  label: string;
+  short: string;
+  color: string;
+  bg: string;
+}[] = [
   { value: 0, label: "빈칸", short: "", color: "#bfbfbf", bg: "#ffffff" },
   { value: 1, label: "주간", short: "주", color: "#1677ff", bg: "#e6f4ff" },
   { value: 2, label: "야간", short: "야", color: "#722ed1", bg: "#f9f0ff" },
