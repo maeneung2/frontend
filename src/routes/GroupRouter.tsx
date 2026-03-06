@@ -8,6 +8,8 @@ import NoticeWritePage from "../pages/group/notice/noticeWritePage.tsx";
 import NoteWritePage from "../pages/group/note/noteWritePage.tsx";
 import GroupSettingPage from "../pages/group/setting/groupSettingPage.tsx";
 import GroupScheduleSettingPage from "../pages/group/setting/groupScheduleSettingPage.tsx";
+import GroupScheduleEditPage from "../pages/group/setting/groupScheduleEditPage.tsx";
+import GroupScheduleDetailPage from "../pages/group/setting/groupScheduleDetailPage.tsx";
 import GroupUserSettingPage from "../pages/group/setting/groupUserSettingPage.tsx";
 
 import PrivateRoute from "../components/PrivateRoute.tsx";
@@ -51,6 +53,14 @@ const GroupRouter: RouteObject = {
     {
       path: "/group/:group_id/setting/schedule",
       element: <GroupScheduleSettingPage />,
+    },
+    {
+      path: "/group/:group_id/setting/schedule/create",
+      element: <GroupScheduleEditPage />,
+    },
+    {
+      path: "/group/:group_id/setting/schedule/:schedule_id",
+      element: <GroupScheduleDetailPage />,
     },
     {
       path: "/group/:group_id/setting/user",

@@ -1,0 +1,150 @@
+import { useEffect, useState } from "react";
+import { Flex } from "@chakra-ui/react";
+import { Button, Typography, Spin } from "antd";
+import { FullscreenExitOutlined, FullscreenOutlined } from "@ant-design/icons";
+import { useParams } from "react-router-dom";
+import dayjs from "dayjs";
+import { api } from "../../../api/axios";
+import type { InitData } from "../../../components/schedule/scheduleTypes";
+import ScheduleTable from "../../../components/schedule/ScheduleTable";
+
+const { Title, Text } = Typography;
+
+interface ScheduleWorker {
+  id: string;
+  userId: string;
+  userName: string;
+  userProfile: string | null;
+  isNight: boolean;
+  isNew: boolean;
+  admin: boolean;
+  targetWorkCount: number;
+  scheduleId: string;
+  user?: {
+    userId: string;
+    userName: string;
+    userProfile: string | null;
+  };
+}
+
+interface ScheduleDetail {
+  scheduleId: string;
+  groupId: string;
+  date: string;
+  createdAt: string;
+  schedule: number[][];
+  workers: ScheduleWorker[];
+}
+
+const GroupScheduleDetailPage = () => {
+  const { group_id, schedule_id } = useParams();
+  const [detail, setDetail] = useState<ScheduleDetail | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+
+  useEffect(() => {
+    const fetch = async () => {
+      setLoading(true);
+      try {
+        const res = await api.get(`/api/v1/schedule/${schedule_id}`);
+        setDetail(res.data.data);
+      } catch {
+        alert("스케줄을 불러오는데 실패했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    void fetch();
+  }, [group_id, schedule_id]);
+
+  if (loading) {
+    return (
+      <Flex justify={"center"} align={"center"} p={8}>
+        <Spin />
+      </Flex>
+    );
+  }
+
+  if (!detail) return null;
+
+  const date = dayjs(detail.date);
+  const initData: InitData = {
+    numDays: date.daysInMonth(),
+    firstWeekday: date.day(),
+    targetWorkCount: 0,
+    selectedDay: [],
+    selectedNight: [],
+    workers: detail.workers.map((w) => ({
+      userId: w.userId ?? w.user?.userId ?? w.id,
+      userName: w.userName ?? w.user?.userName ?? "",
+      userProfile: w.userProfile ?? w.user?.userProfile,
+      isNight: w.isNight,
+      targetWorkCount: w.targetWorkCount,
+      admin: w.admin,
+    })),
+  };
+
+  return (
+    <>
+      <Flex flexDir={"column"} gap={4} p={4}>
+        <Flex justify={"space-between"} align={"flex-start"}>
+          <Flex flexDir={"column"} gap={1}>
+            <Title level={4} style={{ margin: 0 }}>
+              {date.format("YYYY년 MM월")} 스케줄
+            </Title>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              생성일: {dayjs(detail.createdAt).format("YYYY-MM-DD HH:mm")}
+            </Text>
+          </Flex>
+          <Button
+            icon={<FullscreenOutlined />}
+            onClick={() => setFullscreen(true)}
+            size="middle"
+          />
+        </Flex>
+
+        <ScheduleTable initData={initData} schedule={detail.schedule} />
+      </Flex>
+
+      {fullscreen && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            background: "white",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              width: "100vh",
+              height: "100vw",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%) rotate(90deg)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+              padding: 12,
+              boxSizing: "border-box",
+              overflow: "hidden",
+            }}
+          >
+            <Flex justify={"flex-end"} flexShrink={0}>
+              <Button
+                icon={<FullscreenExitOutlined />}
+                onClick={() => setFullscreen(false)}
+                size="middle"
+              />
+            </Flex>
+            <ScheduleTable initData={initData} schedule={detail.schedule} cellSize={44} />
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default GroupScheduleDetailPage;
