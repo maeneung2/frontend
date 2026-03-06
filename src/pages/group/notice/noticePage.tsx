@@ -1,14 +1,50 @@
+import { useEffect, useState } from "react";
 import { Flex } from "@chakra-ui/react";
-import { Link, useParams } from "react-router-dom";
+import { Button, Typography } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
+import { useNavigate, useParams } from "react-router-dom";
+import { api } from "../../../api/axios";
+import NoticeList, { type NoticeItem } from "../../../components/notice/NoticeList";
+
+const { Title } = Typography;
 
 const NoticePage = () => {
   const { group_id } = useParams();
+  const navigate = useNavigate();
+  const [notices, setNotices] = useState<NoticeItem[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetch = async () => {
+      setLoading(true);
+      try {
+        const res = await api.get(`/api/v1/notice/${group_id}/list`);
+        setNotices(res.data.data);
+      } catch {
+        alert("공지사항 목록을 불러오는데 실패했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    void fetch();
+  }, [group_id]);
 
   return (
-    <Flex flexDir={"column"}>
-      공지사항 페이지
-      <Link to={`/group/${group_id}/notice/default_notice_id`}>공지사항 상세페이지</Link>
-      <Link to={`/group/${group_id}/notice/write`}>공지사항 작성페이지</Link>
+    <Flex flexDir={"column"} gap={4} p={4}>
+      <Flex justify={"space-between"} align={"center"}>
+        <Title level={4} style={{ margin: 0 }}>
+          공지사항
+        </Title>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => navigate(`/group/${group_id}/notice/write`)}
+        >
+          작성
+        </Button>
+      </Flex>
+
+      <NoticeList groupId={group_id!} notices={notices} loading={loading} />
     </Flex>
   );
 };

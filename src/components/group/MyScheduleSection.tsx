@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Flex } from "@chakra-ui/react";
-import { Button, Spin, Typography } from "antd";
+import { Button, Drawer, Empty, List, Spin, Typography } from "antd";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import dayjs, { Dayjs } from "dayjs";
 import { api } from "../../api/axios";
@@ -8,37 +8,73 @@ import MyScheduleCalendar from "../schedule/MyScheduleCalendar";
 
 const { Title, Text } = Typography;
 
+interface NoteItem {
+  noteId: string;
+  date: string;
+  content: string;
+  writer: string;
+}
+
 interface Props {
   groupId: string;
 }
 
 const MyScheduleSection = ({ groupId }: Props) => {
   const [calendarDate, setCalendarDate] = useState<Dayjs>(dayjs().startOf("month"));
-  const [mySchedule, setMySchedule] = useState<number[] | null>(null);
+  const [mySchedule, setMySchedule] = useState<number[]>([]);
+  const [noteDays, setNoteDays] = useState<number[]>([]);
   const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
+  const [dateNotes, setDateNotes] = useState<NoteItem[]>([]);
+  const [notesLoading, setNotesLoading] = useState(false);
 
   useEffect(() => {
     const fetch = async () => {
       setScheduleLoading(true);
-      setMySchedule(null);
+      setMySchedule([]);
+      setNoteDays([]);
       try {
-        const listRes = await api.get("/api/v1/schedule", {
-          params: { groupId },
-        });
+        const [listRes, noteRes] = await Promise.all([
+          api.get("/api/v1/schedule", { params: { groupId } }),
+          api.get("/api/v1/note/list", { params: { groupId } }),
+        ]);
+
         const schedules: { scheduleId: string; date: string }[] = listRes.data.data;
         const matched = schedules.find((s) => dayjs(s.date).isSame(calendarDate, "month"));
-        if (!matched) return;
+        if (matched) {
+          const meRes = await api.get(`/api/v1/schedule/${matched.scheduleId}/me`);
+          setMySchedule(meRes.data.data.schedule ?? []);
+        }
 
-        const meRes = await api.get(`/api/v1/schedule/${matched.scheduleId}/me`);
-        setMySchedule(meRes.data.data.schedule);
+        const notes: { date: string }[] = noteRes.data.data ?? [];
+        const days = notes
+          .filter((n) => dayjs(n.date).isSame(calendarDate, "month"))
+          .map((n) => dayjs(n.date).date() - 1);
+        setNoteDays(days);
       } catch {
-        // 스케줄 없는 달은 조용히 처리
+        // 조용히 처리
       } finally {
         setScheduleLoading(false);
       }
     };
     void fetch();
   }, [groupId, calendarDate]);
+
+  const handleDayClick = async (day: Dayjs) => {
+    setSelectedDate(day);
+    setDateNotes([]);
+    setNotesLoading(true);
+    try {
+      const res = await api.get("/api/v1/note/list/by-date", {
+        params: { date: day.format("YYYY-MM-DD") },
+      });
+      setDateNotes(res.data.data ?? []);
+    } catch {
+      // 조용히 처리
+    } finally {
+      setNotesLoading(false);
+    }
+  };
 
   return (
     <Flex flexDir={"column"} gap={3}>
@@ -69,13 +105,43 @@ const MyScheduleSection = ({ groupId }: Props) => {
         <Flex justify={"center"} p={6}>
           <Spin />
         </Flex>
-      ) : mySchedule ? (
-        <MyScheduleCalendar date={calendarDate} schedule={mySchedule} />
       ) : (
-        <Flex justify={"center"} align={"center"} p={8} style={{ color: "#bfbfbf", fontSize: 14 }}>
-          해당 월의 스케줄이 없습니다.
-        </Flex>
+        <MyScheduleCalendar
+          date={calendarDate}
+          schedule={mySchedule}
+          noteDays={noteDays}
+          onDayClick={handleDayClick}
+        />
       )}
+
+      <Drawer
+        title={selectedDate ? `${selectedDate.format("MM월 DD일")} 인수인계` : "인수인계"}
+        placement="bottom"
+        height={360}
+        open={!!selectedDate}
+        onClose={() => setSelectedDate(null)}
+      >
+        {notesLoading ? (
+          <Flex justify={"center"} align={"center"} style={{ height: "100%" }}>
+            <Spin />
+          </Flex>
+        ) : dateNotes.length === 0 ? (
+          <Empty description="등록된 인수인계가 없습니다." />
+        ) : (
+          <List
+            dataSource={dateNotes}
+            renderItem={(note) => (
+              <List.Item key={note.noteId}>
+                <List.Item.Meta
+                  description={
+                    <Text style={{ whiteSpace: "pre-wrap", fontSize: 13 }}>{note.content}</Text>
+                  }
+                />
+              </List.Item>
+            )}
+          />
+        )}
+      </Drawer>
     </Flex>
   );
 };

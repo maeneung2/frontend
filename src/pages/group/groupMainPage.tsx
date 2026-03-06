@@ -4,7 +4,6 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button, Modal, Spin, Typography } from "antd";
 import { api } from "../../api/axios";
 import { useAuthStore } from "../../store/authStore";
-import MyScheduleSection from "../../components/group/MyScheduleSection";
 
 const { Title } = Typography;
 
@@ -74,7 +73,6 @@ const GroupMainPage = () => {
         </Flex>
       </Flex>
 
-      <MyScheduleSection groupId={group_id!} />
     </Flex>
   );
 };

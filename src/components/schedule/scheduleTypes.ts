@@ -1,7 +1,7 @@
 export interface Worker {
   userId: string;
   userName: string;
-  userProfile?: string;
+  userProfile?: string | null;
   isNight: boolean;
   targetWorkCount: number;
   admin: boolean;

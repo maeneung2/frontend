@@ -6,6 +6,8 @@ import { useAuthStore } from "../store/authStore";
 import { useThemeStore } from "../store/themeStore";
 import { api } from "../api/axios";
 import CreateGroupModal from "../components/group/CreateGroupModal";
+import MyScheduleSection from "../components/group/MyScheduleSection";
+import GroupSummarySection from "../components/group/GroupSummarySection";
 
 const IndexPage = () => {
   const clear = useAuthStore((s) => s.clear);
@@ -27,24 +29,28 @@ const IndexPage = () => {
   };
 
   return (
-    <Flex flexDir={"column"}>
-      메인 페이지
-      <Switch
-        checked={isDark}
-        onChange={(checked) => setPreference(checked ? "dark" : "light")}
-        checkedChildren="🌙"
-        unCheckedChildren="☀️"
-      />
-      <Link to={"/mypage"}>내정보 페이지</Link>
-      <Link to={"/alarm"}>알림 페이지</Link>
-      {user?.groupId && <Link to={`/group/${user.groupId}`}>그룹 페이지</Link>}
-      {user?.groupId && (
-        <Link to={`/group/${user.groupId}/note/default_note_id`}>인수인계 페이지</Link>
-      )}
-      {!user?.groupId && <button onClick={() => setOpen(true)}>그룹 추가</button>}
-      <Text cursor={"pointer"} onClick={handleLogout}>
-        로그아웃
-      </Text>
+    <Flex flexDir={"column"} gap={4} p={4}>
+      <Flex justify={"space-between"} align={"center"}>
+        <Switch
+          checked={isDark}
+          onChange={(checked) => setPreference(checked ? "dark" : "light")}
+          checkedChildren="🌙"
+          unCheckedChildren="☀️"
+        />
+        <Flex gap={4} align={"center"}>
+          <Link to={"/mypage"}>내정보</Link>
+          <Link to={"/alarm"}>알림</Link>
+          {user?.groupId && <Link to={`/group/${user.groupId}`}>그룹</Link>}
+          {!user?.groupId && <button onClick={() => setOpen(true)}>그룹 추가</button>}
+          <Text cursor={"pointer"} onClick={handleLogout}>
+            로그아웃
+          </Text>
+        </Flex>
+      </Flex>
+
+      {user?.groupId && <MyScheduleSection groupId={user.groupId} />}
+      {user?.groupId && <GroupSummarySection groupId={user.groupId} />}
+
       <CreateGroupModal open={open} onClose={() => setOpen(false)} />
     </Flex>
   );

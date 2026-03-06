@@ -13,58 +13,30 @@ import GroupScheduleDetailPage from "../pages/group/setting/groupScheduleDetailP
 import GroupUserSettingPage from "../pages/group/setting/groupUserSettingPage.tsx";
 
 import PrivateRoute from "../components/PrivateRoute.tsx";
+import SubPageLayout from "../components/SubPageLayout.tsx";
 
 const GroupRouter: RouteObject = {
   path: "/group",
   element: <PrivateRoute />,
   children: [
     {
-      path: "/group/:group_id",
-      element: <GroupMainPage />,
-    },
-    {
-      path: "/group/:group_id/notice",
-      element: <NoticePage />,
-    },
-    {
-      path: "/group/:group_id/notice/write",
-      element: <NoticeWritePage />,
-    },
-    {
-      path: "/group/:group_id/notice/:notice_id",
-      element: <NoticeDetailPage />,
-    },
-    {
-      path: "/group/:group_id/note",
-      element: <NotePage />,
-    },
-    {
-      path: "/group/:group_id/note/write",
-      element: <NoteWritePage />,
-    },
-    {
-      path: "/group/:group_id/note/:note_id",
-      element: <NoteDetailPage />,
-    },
-    {
-      path: "/group/:group_id/setting",
-      element: <GroupSettingPage />,
-    },
-    {
-      path: "/group/:group_id/setting/schedule",
-      element: <GroupScheduleSettingPage />,
-    },
-    {
-      path: "/group/:group_id/setting/schedule/create",
-      element: <GroupScheduleEditPage />,
-    },
-    {
-      path: "/group/:group_id/setting/schedule/:schedule_id",
-      element: <GroupScheduleDetailPage />,
-    },
-    {
-      path: "/group/:group_id/setting/user",
-      element: <GroupUserSettingPage />,
+      element: <SubPageLayout />,
+      children: [
+        { path: "/group/:group_id", element: <GroupMainPage /> },
+        { path: "/group/:group_id/notice", element: <NoticePage /> },
+        { path: "/group/:group_id/notice/write", element: <NoticeWritePage /> },
+        { path: "/group/:group_id/notice/:notice_id", element: <NoticeDetailPage /> },
+        { path: "/group/:group_id/notice/:notice_id/edit", element: <NoticeWritePage /> },
+        { path: "/group/:group_id/note", element: <NotePage /> },
+        { path: "/group/:group_id/note/write", element: <NoteWritePage /> },
+        { path: "/group/:group_id/note/:note_id", element: <NoteDetailPage /> },
+        { path: "/group/:group_id/note/:note_id/edit", element: <NoteWritePage /> },
+        { path: "/group/:group_id/setting", element: <GroupSettingPage /> },
+        { path: "/group/:group_id/setting/schedule", element: <GroupScheduleSettingPage /> },
+        { path: "/group/:group_id/setting/schedule/create", element: <GroupScheduleEditPage /> },
+        { path: "/group/:group_id/setting/schedule/:schedule_id", element: <GroupScheduleDetailPage /> },
+        { path: "/group/:group_id/setting/user", element: <GroupUserSettingPage /> },
+      ],
     },
   ],
 };

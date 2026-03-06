@@ -1,0 +1,47 @@
+import { List, Typography } from "antd";
+import { Flex } from "@chakra-ui/react";
+import { useNavigate } from "react-router-dom";
+import dayjs from "dayjs";
+
+const { Text } = Typography;
+
+export interface NoticeItem {
+  noticeId: string;
+  title: string;
+  createdAt: string;
+}
+
+interface Props {
+  groupId: string;
+  notices: NoticeItem[];
+  loading: boolean;
+}
+
+const NoticeList = ({ groupId, notices, loading }: Props) => {
+  const navigate = useNavigate();
+
+  return (
+    <List
+      loading={loading}
+      dataSource={notices}
+      locale={{ emptyText: "등록된 공지사항이 없습니다." }}
+      renderItem={(item) => (
+        <List.Item
+          onClick={() => navigate(`/group/${groupId}/notice/${item.noticeId}`)}
+          style={{ cursor: "pointer", padding: "12px 4px" }}
+        >
+          <Flex flexDir={"column"} gap={1} style={{ width: "100%" }}>
+            <Text strong style={{ fontSize: 14 }}>
+              {item.title}
+            </Text>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              {dayjs(item.createdAt).format("YYYY-MM-DD HH:mm")}
+            </Text>
+          </Flex>
+        </List.Item>
+      )}
+    />
+  );
+};
+
+export default NoticeList;

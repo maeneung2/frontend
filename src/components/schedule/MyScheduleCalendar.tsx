@@ -7,9 +7,11 @@ const { Text } = Typography;
 interface Props {
   date: Dayjs;
   schedule: number[];
+  noteDays?: number[];
+  onDayClick?: (date: Dayjs) => void;
 }
 
-const MyScheduleCalendar = ({ date, schedule }: Props) => {
+const MyScheduleCalendar = ({ date, schedule, noteDays = [], onDayClick }: Props) => {
   const numDays = date.daysInMonth();
   const firstWeekday = date.day();
 
@@ -67,10 +69,12 @@ const MyScheduleCalendar = ({ date, schedule }: Props) => {
             const wt = WORK_TYPES[val];
             const dow = colIdx;
             const isToday = dayjs().isSame(date.date(dayIdx + 1), "day");
+            const hasNote = noteDays.includes(dayIdx);
 
             return (
               <div
                 key={colIdx}
+                onClick={() => onDayClick?.(date.date(dayIdx + 1))}
                 style={{
                   aspectRatio: "1",
                   display: "flex",
@@ -83,6 +87,8 @@ const MyScheduleCalendar = ({ date, schedule }: Props) => {
                     ? `2px solid ${val !== 0 ? wt.color : "#1677ff"}`
                     : "1px solid #f0f0f0",
                   gap: 2,
+                  position: "relative",
+                  cursor: onDayClick ? "pointer" : "default",
                 }}
               >
                 <Text
@@ -106,6 +112,19 @@ const MyScheduleCalendar = ({ date, schedule }: Props) => {
                   >
                     {wt.short}
                   </Text>
+                )}
+                {hasNote && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 3,
+                      right: 3,
+                      width: 5,
+                      height: 5,
+                      borderRadius: "50%",
+                      background: "#fa8c16",
+                    }}
+                  />
                 )}
               </div>
             );
