@@ -26,7 +26,7 @@ const MypageEditPage = () => {
   const handleSubmit = async (values: { userName: string; phone: string }) => {
     setLoading(true);
     try {
-      const res = await api.patch(`/api/v1/user/${user?.userId}`, values);
+      const res = await api.patch(`/api/v1/user/${user?.id}`, values);
       setLogin(accessToken!, refreshToken!, { ...user!, ...res.data.data });
       navigate(-1);
     } catch {
