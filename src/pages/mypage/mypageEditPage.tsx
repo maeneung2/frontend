@@ -21,7 +21,7 @@ const MypageEditPage = () => {
       userName: user?.userName,
       phone: user?.phone,
     });
-  }, [user]);
+  }, [user, form]);
 
   const handleSubmit = async (values: { userName: string; phone: string }) => {
     setLoading(true);

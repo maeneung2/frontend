@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Read(//mnt/c/Users/Damie/WebstormProjects/**)",
-      "Read(//mnt/c/Users/Damie/**)"
+      "Read(//mnt/c/Users/Damie/**)",
+      "Bash(pnpm lint:*)"
     ]
   }
 }

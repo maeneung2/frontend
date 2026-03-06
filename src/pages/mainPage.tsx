@@ -78,7 +78,7 @@ const IndexPage = () => {
       }
     };
     void fetch();
-  }, [calendarDate]);
+  }, [calendarDate, user?.groupId]);
 
   const handleDayClick = async (day: Dayjs) => {
     setSelectedDate(day);

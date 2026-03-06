@@ -24,12 +24,15 @@ const AlarmPage = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
-    api
-      .get("/api/v1/notification/list")
-      .then((res) => setNotifications(res.data.data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    const fetchData = async () => {
+      setLoading(true);
+      await api
+        .get("/api/v1/notification/list")
+        .then((res) => setNotifications(res.data.data))
+        .catch(() => {})
+        .finally(() => setLoading(false));
+    };
+    void fetchData();
   }, []);
 
   const handleClick = async (item: NotificationItem) => {

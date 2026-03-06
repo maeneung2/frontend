@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Flex } from "@chakra-ui/react";
 import { Divider, message } from "antd";
 import { useParams } from "react-router-dom";
@@ -16,7 +16,7 @@ const GroupUserSettingPage = () => {
   const [membersLoading, setMembersLoading] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
 
-  const fetchMembers = async () => {
+  const fetchMembers = useCallback(async () => {
     setMembersLoading(true);
     try {
       const res = await api.get(`/api/v1/group/${group_id}`);
@@ -27,11 +27,11 @@ const GroupUserSettingPage = () => {
     } finally {
       setMembersLoading(false);
     }
-  };
+  }, [group_id]);
 
   useEffect(() => {
     void fetchMembers();
-  }, [group_id]);
+  }, [fetchMembers]);
 
   const handleRemove = async (userId: string) => {
     setRemovingId(userId);

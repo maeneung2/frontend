@@ -29,20 +29,24 @@ const GroupSummarySection = ({ groupId }: Props) => {
   const [notesLoading, setNotesLoading] = useState(false);
 
   useEffect(() => {
-    setNoticesLoading(true);
-    api
-      .get(`/api/v1/notice/${groupId}/list`)
-      .then((res) => setNotices((res.data.data ?? []).slice(0, 3)))
-      .catch(() => {})
-      .finally(() => setNoticesLoading(false));
-
-    const today = dayjs().format("YYYY-MM-DD");
-    setNotesLoading(true);
-    api
-      .get("/api/v1/note/list/by-date", { params: { date: today } })
-      .then((res) => setTodayNotes(res.data.data ?? []))
-      .catch(() => {})
-      .finally(() => setNotesLoading(false));
+    const fetchData = async () => {
+      setNoticesLoading(true);
+      setNotesLoading(true);
+      const today = dayjs().format("YYYY-MM-DD");
+      await Promise.all([
+        api
+          .get(`/api/v1/notice/${groupId}/list`)
+          .then((res) => setNotices((res.data.data ?? []).slice(0, 3)))
+          .catch(() => {})
+          .finally(() => setNoticesLoading(false)),
+        api
+          .get("/api/v1/note/list/by-date", { params: { date: today } })
+          .then((res) => setTodayNotes(res.data.data ?? []))
+          .catch(() => {})
+          .finally(() => setNotesLoading(false)),
+      ]);
+    };
+    void fetchData();
   }, [groupId]);
 
   return (
