@@ -5,7 +5,6 @@ import AlarmPage from "../pages/mypage/alarmPage.tsx";
 import MypageEditPage from "../pages/mypage/mypageEditPage.tsx";
 import SplashPage from "../pages/splashPage.tsx";
 import PrivateRoute from "../components/PrivateRoute.tsx";
-import SubPageLayout from "../components/SubPageLayout.tsx";
 
 const IndexRoute: RouteObject = {
   path: "",
@@ -22,21 +21,16 @@ const IndexRoute: RouteObject = {
           element: <IndexPage />,
         },
         {
-          element: <SubPageLayout />,
-          children: [
-            {
-              path: "/mypage",
-              element: <MypagePage />,
-            },
-            {
-              path: "/mypage/edit",
-              element: <MypageEditPage />,
-            },
-            {
-              path: "/alarm",
-              element: <AlarmPage />,
-            },
-          ],
+          path: "/mypage",
+          element: <MypagePage />,
+        },
+        {
+          path: "/mypage/edit",
+          element: <MypageEditPage />,
+        },
+        {
+          path: "/alarm",
+          element: <AlarmPage />,
         },
       ],
     },

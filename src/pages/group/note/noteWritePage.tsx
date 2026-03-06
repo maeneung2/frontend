@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import { Flex } from "@chakra-ui/react";
-import { Form, Typography } from "antd";
+import { Form } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
 import { api } from "../../../api/axios";
 import NoteForm from "../../../components/note/NoteForm";
-
-const { Title } = Typography;
+import PageHeader from "../../../components/common/PageHeader";
 
 const NoteWritePage = () => {
   const { group_id, note_id } = useParams();
@@ -50,9 +49,7 @@ const NoteWritePage = () => {
 
   return (
     <Flex flexDir={"column"} gap={4} p={4}>
-      <Title level={4} style={{ margin: 0 }}>
-        {isEdit ? "인수인계 수정" : "인수인계 작성"}
-      </Title>
+      <PageHeader title={isEdit ? "인수인계 수정" : "인수인계 작성"} />
       <NoteForm
         form={form}
         loading={loading}

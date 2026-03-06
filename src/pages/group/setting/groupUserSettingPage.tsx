@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import { Flex } from "@chakra-ui/react";
-import { Divider, Typography, message } from "antd";
+import { Divider, message } from "antd";
 import { useParams } from "react-router-dom";
 import { api } from "../../../api/axios";
 import { useAuthStore } from "../../../store/authStore";
 import InviteMemberInput from "../../../components/group/InviteMemberInput";
 import MemberList, { type Member } from "../../../components/group/MemberList";
-
-const { Title } = Typography;
+import PageHeader from "../../../components/common/PageHeader";
 
 const GroupUserSettingPage = () => {
   const { group_id } = useParams();
@@ -49,7 +48,7 @@ const GroupUserSettingPage = () => {
 
   return (
     <Flex flexDir={"column"} gap={4} p={4}>
-      <Title level={4}>그룹원 관리</Title>
+      <PageHeader title="그룹원 관리" />
 
       <InviteMemberInput groupId={group_id!} onSuccess={fetchMembers} />
 

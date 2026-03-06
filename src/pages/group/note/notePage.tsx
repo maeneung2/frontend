@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { Flex } from "@chakra-ui/react";
-import { Button, Typography } from "antd";
+import { Button } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../../../api/axios";
 import NoteList, { type NoteItem } from "../../../components/note/NoteList";
-
-const { Title } = Typography;
+import PageHeader from "../../../components/common/PageHeader";
 
 const NotePage = () => {
   const { group_id } = useParams();
@@ -33,18 +32,14 @@ const NotePage = () => {
 
   return (
     <Flex flexDir={"column"} gap={4} p={4}>
-      <Flex justify={"space-between"} align={"center"}>
-        <Title level={4} style={{ margin: 0 }}>
-          인수인계
-        </Title>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => navigate(`/group/${group_id}/note/write`)}
-        >
-          작성
-        </Button>
-      </Flex>
+      <PageHeader
+        title="인수인계"
+        extra={
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(`/group/${group_id}/note/write`)}>
+            작성
+          </Button>
+        }
+      />
 
       <NoteList groupId={group_id!} notes={notes} loading={loading} />
     </Flex>

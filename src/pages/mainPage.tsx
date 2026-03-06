@@ -1,55 +1,302 @@
-import { useState } from "react";
-import { Flex, Text } from "@chakra-ui/react";
-import { Switch } from "antd";
+import { useEffect, useState } from "react";
+import { Flex } from "@chakra-ui/react";
+import { Avatar, Badge, Button, Drawer, Empty, List, Tag, Typography } from "antd";
+import { BellOutlined, LeftOutlined, RightOutlined, UserOutlined } from "@ant-design/icons";
 import { Link, useNavigate } from "react-router-dom";
+import dayjs, { Dayjs } from "dayjs";
 import { useAuthStore } from "../store/authStore";
-import { useThemeStore } from "../store/themeStore";
 import { api } from "../api/axios";
 import CreateGroupModal from "../components/group/CreateGroupModal";
-import MyScheduleSection from "../components/group/MyScheduleSection";
-import GroupSummarySection from "../components/group/GroupSummarySection";
+import MyScheduleCalendar from "../components/schedule/MyScheduleCalendar";
+import { WORK_TYPES } from "../components/schedule/scheduleTypes";
+
+const { Title, Text: AntText } = Typography;
+
+interface TodayUser {
+  userId: string;
+  userName: string;
+  userProfile: string | null;
+}
+
+interface TodayNote {
+  noteId: string;
+  content: string;
+  date: string;
+  createdAt: string;
+  user: TodayUser;
+}
+
+interface MainData {
+  todayWorkers: { day: TodayUser[]; night: TodayUser[] };
+  todayNotes: TodayNote[];
+}
+
+interface NoteItem {
+  noteId: string;
+  date: string;
+  content: string;
+  writer: string;
+}
 
 const IndexPage = () => {
-  const clear = useAuthStore((s) => s.clear);
-  const refreshToken = useAuthStore((s) => s.refreshToken);
   const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
-  const { preference, setPreference } = useThemeStore();
   const [open, setOpen] = useState(false);
+  const [mainData, setMainData] = useState<MainData | null>(null);
+  const [calendarDate, setCalendarDate] = useState<Dayjs>(dayjs().startOf("month"));
+  const [calendarSchedule, setCalendarSchedule] = useState<number[]>([]);
+  const [noteDays, setNoteDays] = useState<number[]>([]);
+  const [calendarLoading, setCalendarLoading] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
+  const [dateNotes, setDateNotes] = useState<NoteItem[]>([]);
+  const [notesLoading, setNotesLoading] = useState(false);
 
-  const isDark = preference === "dark";
+  useEffect(() => {
+    if (!user?.groupId) return;
+    const today = dayjs().format("YYYY-MM-DD");
+    api
+      .get(`/api/v1/main`, { params: { date: today } })
+      .then((res) => setMainData(res.data.data))
+      .catch(() => {});
+  }, [user?.groupId]);
 
-  const handleLogout = async () => {
+  useEffect(() => {
+    if (!user?.groupId) return;
+    const fetch = async () => {
+      setCalendarLoading(true);
+      setCalendarSchedule([]);
+      try {
+        const res = await api.get("/api/v1/main/schedule", {
+          params: { date: calendarDate.format("YYYY-MM-DD") },
+        });
+        setCalendarSchedule(res.data.data?.schedule ?? []);
+        setNoteDays(res.data.data?.noteDays ?? []);
+      } catch {
+        // 조용히 처리
+      } finally {
+        setCalendarLoading(false);
+      }
+    };
+    void fetch();
+  }, [calendarDate]);
+
+  const handleDayClick = async (day: Dayjs) => {
+    setSelectedDate(day);
+    setDateNotes([]);
+    setNotesLoading(true);
     try {
-      await api.post("/api/v1/auth/logout", { refreshToken });
+      const res = await api.get("/api/v1/note/list/by-date", {
+        params: { date: day.format("YYYY-MM-DD") },
+      });
+      setDateNotes(res.data.data ?? []);
+    } catch {
+      // 조용히 처리
     } finally {
-      clear();
-      navigate("/login");
+      setNotesLoading(false);
     }
   };
 
   return (
     <Flex flexDir={"column"} gap={4} p={4}>
       <Flex justify={"space-between"} align={"center"}>
-        <Switch
-          checked={isDark}
-          onChange={(checked) => setPreference(checked ? "dark" : "light")}
-          checkedChildren="🌙"
-          unCheckedChildren="☀️"
-        />
-        <Flex gap={4} align={"center"}>
-          <Link to={"/mypage"}>내정보</Link>
-          <Link to={"/alarm"}>알림</Link>
-          {user?.groupId && <Link to={`/group/${user.groupId}`}>그룹</Link>}
+        <Link to={"/mypage"}>
+          <Flex align={"center"} gap={2}>
+            <Avatar icon={<UserOutlined />} size={36} />
+            <AntText strong style={{ fontSize: 15 }}>
+              {user?.userName}
+            </AntText>
+          </Flex>
+        </Link>
+        <Flex align={"center"} gap={2}>
           {!user?.groupId && <button onClick={() => setOpen(true)}>그룹 추가</button>}
-          <Text cursor={"pointer"} onClick={handleLogout}>
-            로그아웃
-          </Text>
+          <Link to={"/alarm"}>
+            <Badge dot>
+              <Button shape="circle" icon={<BellOutlined />} />
+            </Badge>
+          </Link>
         </Flex>
       </Flex>
 
-      {user?.groupId && <MyScheduleSection groupId={user.groupId} />}
-      {user?.groupId && <GroupSummarySection groupId={user.groupId} />}
+      {user?.groupId && (
+        <>
+          {/* 내 스케줄 */}
+          <Flex flexDir={"column"} gap={3}>
+            <Flex justify={"space-between"} align={"center"}>
+              <Flex align={"center"} gap={2}>
+                <Title level={5} style={{ margin: 0 }}>
+                  내 스케줄
+                </Title>
+                <Link to={`/group/${user.groupId}`}>
+                  <AntText type="secondary" style={{ fontSize: 12 }}>
+                    그룹 바로가기 →
+                  </AntText>
+                </Link>
+              </Flex>
+              <Flex align={"center"} gap={2}>
+                <Button
+                  icon={<LeftOutlined />}
+                  size="small"
+                  type="text"
+                  onClick={() => setCalendarDate((d) => d.subtract(1, "month"))}
+                />
+                <AntText style={{ fontWeight: 600, minWidth: 80, textAlign: "center" }}>
+                  {calendarDate.format("YYYY년 MM월")}
+                </AntText>
+                <Button
+                  icon={<RightOutlined />}
+                  size="small"
+                  type="text"
+                  onClick={() => setCalendarDate((d) => d.add(1, "month"))}
+                />
+              </Flex>
+            </Flex>
+            {calendarLoading ? (
+              <Flex justify={"center"} p={6}>
+                <AntText type="secondary">불러오는 중...</AntText>
+              </Flex>
+            ) : (
+              <MyScheduleCalendar
+                date={calendarDate}
+                schedule={calendarSchedule}
+                noteDays={noteDays}
+                onDayClick={handleDayClick}
+              />
+            )}
+          </Flex>
+
+          {/* 오늘 근무자 */}
+          <Flex flexDir={"column"} gap={2}>
+            <Flex align={"baseline"} gap={2}>
+              <Title level={5} style={{ margin: 0 }}>
+                오늘 근무자
+              </Title>
+              <AntText type="secondary" style={{ fontSize: 12 }}>
+                {dayjs().format("MM월 DD일 (ddd)")}
+              </AntText>
+            </Flex>
+            {(() => {
+              const groups = [
+                { workType: 1, users: mainData?.todayWorkers.day ?? [] },
+                { workType: 2, users: mainData?.todayWorkers.night ?? [] },
+              ].filter((g) => g.users.length > 0);
+              return groups.length === 0 ? (
+                <Flex
+                  justify={"center"}
+                  align={"center"}
+                  p={5}
+                  style={{ color: "#bfbfbf", fontSize: 14 }}
+                >
+                  오늘 스케줄이 없습니다.
+                </Flex>
+              ) : (
+                <Flex flexDir={"column"} gap={2}>
+                  {groups.map(({ workType, users }) => {
+                    const wt = WORK_TYPES.find((w) => w.value === workType)!;
+                    return (
+                      <Flex key={workType} align={"center"} gap={2} wrap={"wrap"}>
+                        <Tag
+                          color={wt.color}
+                          style={{ minWidth: 36, textAlign: "center", margin: 0 }}
+                        >
+                          {wt.short}
+                        </Tag>
+                        <Flex gap={1} wrap={"wrap"}>
+                          {users.map((u) => (
+                            <Tag key={u.userId} style={{ margin: 0 }}>
+                              {u.userName}
+                            </Tag>
+                          ))}
+                        </Flex>
+                      </Flex>
+                    );
+                  })}
+                </Flex>
+              );
+            })()}
+          </Flex>
+
+          {/* 오늘 인수인계 */}
+          <Flex flexDir={"column"} gap={2}>
+            <Title level={5} style={{ margin: 0 }}>
+              오늘 인수인계
+            </Title>
+            {!mainData || mainData.todayNotes.length === 0 ? (
+              <Flex
+                justify={"center"}
+                align={"center"}
+                p={5}
+                style={{ color: "#bfbfbf", fontSize: 14 }}
+              >
+                오늘 인수인계가 없습니다.
+              </Flex>
+            ) : (
+              <Flex flexDir={"column"}>
+                {mainData.todayNotes.map((note) => (
+                  <Flex
+                    key={note.noteId}
+                    flexDir={"column"}
+                    gap={1}
+                    p={"10px 4px"}
+                    style={{ borderBottom: "1px solid #f0f0f0", cursor: "pointer" }}
+                    onClick={() => navigate(`/group/${user.groupId}/note/${note.noteId}`)}
+                  >
+                    <Flex justify={"space-between"} align={"center"}>
+                      <AntText strong style={{ fontSize: 13 }}>
+                        {note.user.userName}
+                      </AntText>
+                      <AntText type="secondary" style={{ fontSize: 12 }}>
+                        {dayjs(note.createdAt).format("HH:mm")}
+                      </AntText>
+                    </Flex>
+                    <AntText
+                      type="secondary"
+                      style={{
+                        fontSize: 13,
+                        overflow: "hidden",
+                        whiteSpace: "nowrap",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {note.content}
+                    </AntText>
+                  </Flex>
+                ))}
+              </Flex>
+            )}
+          </Flex>
+        </>
+      )}
+
+      <Drawer
+        title={selectedDate ? `${selectedDate.format("MM월 DD일")} 인수인계` : "인수인계"}
+        placement="bottom"
+        height={360}
+        open={!!selectedDate}
+        onClose={() => setSelectedDate(null)}
+      >
+        {notesLoading ? (
+          <Flex justify={"center"} align={"center"} style={{ height: "100%" }}>
+            <AntText>불러오는 중...</AntText>
+          </Flex>
+        ) : dateNotes.length === 0 ? (
+          <Empty description="등록된 인수인계가 없습니다." />
+        ) : (
+          <List
+            dataSource={dateNotes}
+            renderItem={(note) => (
+              <List.Item key={note.noteId}>
+                <List.Item.Meta
+                  description={
+                    <AntText style={{ whiteSpace: "pre-wrap", fontSize: 13 }}>
+                      {note.content}
+                    </AntText>
+                  }
+                />
+              </List.Item>
+            )}
+          />
+        )}
+      </Drawer>
 
       <CreateGroupModal open={open} onClose={() => setOpen(false)} />
     </Flex>

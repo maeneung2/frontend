@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { Flex } from "@chakra-ui/react";
-import { Form, Typography } from "antd";
+import { Form } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../../../api/axios";
 import NoticeForm from "../../../components/notice/NoticeForm";
-
-const { Title } = Typography;
+import PageHeader from "../../../components/common/PageHeader";
 
 const NoticeWritePage = () => {
   const { group_id, notice_id } = useParams();
@@ -47,9 +46,7 @@ const NoticeWritePage = () => {
 
   return (
     <Flex flexDir={"column"} gap={4} p={4}>
-      <Title level={4} style={{ margin: 0 }}>
-        {isEdit ? "공지사항 수정" : "공지사항 작성"}
-      </Title>
+      <PageHeader title={isEdit ? "공지사항 수정" : "공지사항 작성"} />
       <NoticeForm
         form={form}
         loading={loading}

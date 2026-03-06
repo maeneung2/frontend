@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { Flex } from "@chakra-ui/react";
-import { Button, Typography } from "antd";
+import { Button } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../../../api/axios";
 import ScheduleList, { type ScheduleItem } from "../../../components/schedule/ScheduleList";
-
-const { Title } = Typography;
+import PageHeader from "../../../components/common/PageHeader";
 
 const GroupScheduleSettingPage = () => {
   const { group_id } = useParams();
@@ -46,18 +45,14 @@ const GroupScheduleSettingPage = () => {
 
   return (
     <Flex flexDir={"column"} gap={4} p={4}>
-      <Flex justify={"space-between"} align={"center"}>
-        <Title level={4} style={{ margin: 0 }}>
-          스케줄 관리
-        </Title>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => navigate(`/group/${group_id}/setting/schedule/create`)}
-        >
-          스케줄 생성
-        </Button>
-      </Flex>
+      <PageHeader
+        title="스케줄 관리"
+        extra={
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(`/group/${group_id}/setting/schedule/create`)}>
+            스케줄 생성
+          </Button>
+        }
+      />
 
       <ScheduleList
         groupId={group_id!}

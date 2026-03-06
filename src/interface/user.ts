@@ -1,6 +1,6 @@
 export interface User {
   id: string;
-  user_name: string;
+  userName: string;
   phone: string | null;
   groupId: string | null;
 }

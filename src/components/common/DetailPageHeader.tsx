@@ -1,6 +1,6 @@
 import { Flex } from "@chakra-ui/react";
 import { Button, Popconfirm, Typography } from "antd";
-import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import { ArrowLeftOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 
 const { Title, Text } = Typography;
@@ -28,13 +28,16 @@ const DetailPageHeader = ({
 
   return (
     <Flex justify={"space-between"} align={"flex-start"}>
-      <Flex flexDir={"column"} gap={1} style={{ flex: 1 }}>
-        <Title level={4} style={{ margin: 0 }}>
-          {title}
-        </Title>
-        <Text type="secondary" style={{ fontSize: 12 }}>
-          {subtitle}
-        </Text>
+      <Flex align={"center"} gap={2} style={{ flex: 1 }}>
+        <Button type="text" icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)} />
+        <Flex flexDir={"column"} gap={1}>
+          <Title level={4} style={{ margin: 0 }}>
+            {title}
+          </Title>
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            {subtitle}
+          </Text>
+        </Flex>
       </Flex>
       {isOwner && (
         <Flex gap={1} flexShrink={0}>

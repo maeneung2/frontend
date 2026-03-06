@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import { Flex } from "@chakra-ui/react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { Button, Modal, Spin, Typography } from "antd";
+import { useNavigate, useParams } from "react-router-dom";
+import { Button, List, Modal, Spin, Typography } from "antd";
+import { SettingOutlined } from "@ant-design/icons";
+import dayjs from "dayjs";
 import { api } from "../../api/axios";
 import { useAuthStore } from "../../store/authStore";
+import GroupScheduleSection from "../../components/group/GroupScheduleSection";
+import PageHeader from "../../components/common/PageHeader";
 
-const { Title } = Typography;
+const { Text, Title } = Typography;
 
 interface GroupData {
   groupId: string;
@@ -15,18 +19,38 @@ interface GroupData {
   members: { userId: string; userName: string; userProfile?: string }[];
 }
 
+interface NoticeItem {
+  noticeId: string;
+  title: string;
+  createdAt: string;
+}
+
+interface NoteItem {
+  noteId: string;
+  content: string;
+  date: string;
+  createdAt: string;
+}
+
 const GroupMainPage = () => {
   const { group_id } = useParams();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const [group, setGroup] = useState<GroupData | null>(null);
+  const [notices, setNotices] = useState<NoticeItem[]>([]);
+  const [notes, setNotes] = useState<NoteItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     api
-      .get(`/api/v1/group/${group_id}`)
-      .then((res) => setGroup(res.data.data))
+      .get(`/api/v1/group/${group_id}/summary`)
+      .then((res) => {
+        const { group, notices, notes } = res.data.data;
+        setGroup(group);
+        setNotices(notices);
+        setNotes(notes);
+      })
       .catch(() => setGroup(null))
       .finally(() => setLoading(false));
   }, [group_id]);
@@ -57,22 +81,100 @@ const GroupMainPage = () => {
 
   return (
     <Flex flexDir={"column"} gap={4} p={4}>
-      <Flex justify={"space-between"} align={"center"}>
-        <Title level={4} style={{ margin: 0 }}>
-          {group.groupName}
-        </Title>
-        <Flex gap={2}>
-          <Link to={`/group/${group_id}/notice`}>공지사항</Link>
-          <Link to={`/group/${group_id}/note`}>인수인계</Link>
-          <Link to={`/group/${group_id}/setting`}>설정</Link>
-          {isOwner && (
-            <Button danger size="small" loading={deleteLoading} onClick={handleDelete}>
-              그룹 삭제
-            </Button>
-          )}
+      <PageHeader
+        title={group.groupName}
+        extra={
+          <Flex gap={2}>
+            <Button
+              icon={<SettingOutlined />}
+              type="text"
+              onClick={() => navigate(`/group/${group_id}/setting`)}
+            />
+            {isOwner && (
+              <Button danger size="small" loading={deleteLoading} onClick={handleDelete}>
+                그룹 삭제
+              </Button>
+            )}
+          </Flex>
+        }
+      />
+
+      <GroupScheduleSection groupId={group_id!} />
+
+      {/* 공지사항 */}
+      <Flex flexDir={"column"} gap={1}>
+        <Flex justify={"space-between"} align={"center"}>
+          <Title level={5} style={{ margin: 0 }}>
+            공지사항
+          </Title>
+          <Button type="link" size="small" onClick={() => navigate(`/group/${group_id}/notice`)}>
+            더보기
+          </Button>
         </Flex>
+        <List
+          dataSource={notices}
+          locale={{ emptyText: "등록된 공지사항이 없습니다." }}
+          renderItem={(item) => (
+            <List.Item
+              onClick={() => navigate(`/group/${group_id}/notice/${item.noticeId}`)}
+              style={{ cursor: "pointer", padding: "10px 4px" }}
+            >
+              <Flex flexDir={"column"} gap={1} style={{ width: "100%" }}>
+                <Text strong style={{ fontSize: 14 }}>
+                  {item.title}
+                </Text>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  {dayjs(item.createdAt).format("YYYY-MM-DD HH:mm")}
+                </Text>
+              </Flex>
+            </List.Item>
+          )}
+        />
       </Flex>
 
+      {/* 인수인계 */}
+      <Flex flexDir={"column"} gap={1}>
+        <Flex justify={"space-between"} align={"center"}>
+          <Title level={5} style={{ margin: 0 }}>
+            인수인계
+          </Title>
+          <Button type="link" size="small" onClick={() => navigate(`/group/${group_id}/note`)}>
+            더보기
+          </Button>
+        </Flex>
+        <List
+          dataSource={notes}
+          locale={{ emptyText: "등록된 인수인계가 없습니다." }}
+          renderItem={(item) => (
+            <List.Item
+              onClick={() => navigate(`/group/${group_id}/note/${item.noteId}`)}
+              style={{ cursor: "pointer", padding: "10px 4px" }}
+            >
+              <Flex flexDir={"column"} gap={1} style={{ width: "100%" }}>
+                <Flex justify={"space-between"} align={"center"}>
+                  <Text strong style={{ fontSize: 14 }}>
+                    {dayjs(item.date).format("YYYY년 MM월 DD일")}
+                  </Text>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    {dayjs(item.createdAt).format("MM-DD HH:mm")}
+                  </Text>
+                </Flex>
+                <Text
+                  type="secondary"
+                  style={{
+                    fontSize: 13,
+                    overflow: "hidden",
+                    whiteSpace: "nowrap",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {item.content}
+                </Text>
+              </Flex>
+            </List.Item>
+          )}
+        />
+      </Flex>
     </Flex>
   );
 };

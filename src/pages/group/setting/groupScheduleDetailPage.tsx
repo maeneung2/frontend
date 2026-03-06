@@ -8,8 +8,9 @@ import { api } from "../../../api/axios";
 import type { InitData } from "../../../components/schedule/scheduleTypes";
 import ScheduleTable from "../../../components/schedule/ScheduleTable";
 import ScheduleFullscreenOverlay from "../../../components/schedule/ScheduleFullscreenOverlay";
+import PageHeader from "../../../components/common/PageHeader";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 interface ScheduleWorker {
   id: string;
@@ -88,17 +89,13 @@ const GroupScheduleDetailPage = () => {
   return (
     <>
       <Flex flexDir={"column"} gap={4} p={4}>
-        <Flex justify={"space-between"} align={"flex-start"}>
-          <Flex flexDir={"column"} gap={1}>
-            <Title level={4} style={{ margin: 0 }}>
-              {date.format("YYYY년 MM월")} 스케줄
-            </Title>
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              생성일: {dayjs(detail.createdAt).format("YYYY-MM-DD HH:mm")}
-            </Text>
-          </Flex>
-          <Button icon={<FullscreenOutlined />} onClick={() => setFullscreen(true)} size="middle" />
-        </Flex>
+        <PageHeader
+          title={`${date.format("YYYY년 MM월")} 스케줄`}
+          extra={<Button icon={<FullscreenOutlined />} onClick={() => setFullscreen(true)} />}
+        />
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          생성일: {dayjs(detail.createdAt).format("YYYY-MM-DD HH:mm")}
+        </Text>
 
         <ScheduleTable initData={initData} schedule={detail.schedule} />
       </Flex>

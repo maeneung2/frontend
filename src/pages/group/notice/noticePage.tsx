@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { Flex } from "@chakra-ui/react";
-import { Button, Typography } from "antd";
+import { Button } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../../../api/axios";
 import NoticeList, { type NoticeItem } from "../../../components/notice/NoticeList";
-
-const { Title } = Typography;
+import PageHeader from "../../../components/common/PageHeader";
 
 const NoticePage = () => {
   const { group_id } = useParams();
@@ -31,18 +30,14 @@ const NoticePage = () => {
 
   return (
     <Flex flexDir={"column"} gap={4} p={4}>
-      <Flex justify={"space-between"} align={"center"}>
-        <Title level={4} style={{ margin: 0 }}>
-          공지사항
-        </Title>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => navigate(`/group/${group_id}/notice/write`)}
-        >
-          작성
-        </Button>
-      </Flex>
+      <PageHeader
+        title="공지사항"
+        extra={
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(`/group/${group_id}/notice/write`)}>
+            작성
+          </Button>
+        }
+      />
 
       <NoticeList groupId={group_id!} notices={notices} loading={loading} />
     </Flex>
