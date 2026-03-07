@@ -5,16 +5,10 @@ import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import dayjs, { Dayjs } from "dayjs";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../api/axios";
+import type { NoteDateItem } from "../../types/note";
 import MyScheduleCalendar from "../schedule/MyScheduleCalendar";
 
 const { Title, Text } = Typography;
-
-interface NoteItem {
-  noteId: string;
-  date: string;
-  content: string;
-  writer: string;
-}
 
 interface Props {
   groupId: string;
@@ -52,7 +46,7 @@ const MyScheduleSection = ({ groupId }: Props) => {
   const mySchedule = scheduleData?.mySchedule ?? [];
   const noteDays = scheduleData?.noteDays ?? [];
 
-  const { data: dateNotes = [], isLoading: notesLoading } = useQuery<NoteItem[]>({
+  const { data: dateNotes = [], isLoading: notesLoading } = useQuery<NoteDateItem[]>({
     queryKey: ["notes-by-date", selectedDate?.format("YYYY-MM-DD")],
     queryFn: () =>
       api

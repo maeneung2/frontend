@@ -3,14 +3,9 @@ import { Divider, Empty, List, Spin, Typography } from "antd";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import { api } from "../../api/axios";
+import type { NoticeItem } from "../../types/notice";
 
 const { Title, Text } = Typography;
-
-interface Notice {
-  noticeId: string;
-  title: string;
-  createdAt: string;
-}
 
 interface Note {
   noteId: string;
@@ -23,7 +18,7 @@ interface Props {
 
 const GroupSummarySection = ({ groupId }: Props) => {
   const navigate = useNavigate();
-  const [notices, setNotices] = useState<Notice[]>([]);
+  const [notices, setNotices] = useState<NoticeItem[]>([]);
   const [todayNotes, setTodayNotes] = useState<Note[]>([]);
   const [noticesLoading, setNoticesLoading] = useState(false);
   const [notesLoading, setNotesLoading] = useState(false);

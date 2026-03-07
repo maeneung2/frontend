@@ -6,31 +6,11 @@ import dayjs, { Dayjs } from "dayjs";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../api/axios";
 import type { InitData } from "../schedule/scheduleTypes";
+import type { ScheduleDetail } from "../../types/schedule";
 import ScheduleTable from "../schedule/ScheduleTable";
 import ScheduleFullscreenOverlay from "../schedule/ScheduleFullscreenOverlay";
 
 const { Text } = Typography;
-
-interface ScheduleWorker {
-  id: string;
-  userId: string;
-  userName: string;
-  userProfile: string | null;
-  isNight: boolean;
-  isNew: boolean;
-  admin: boolean;
-  targetWorkCount: number;
-  scheduleId: string;
-  user?: { userId: string; userName: string; userProfile: string | null };
-}
-
-interface ScheduleDetail {
-  scheduleId: string;
-  date: string;
-  createdAt: string;
-  schedule: number[][];
-  workers: ScheduleWorker[];
-}
 
 interface Props {
   groupId: string;

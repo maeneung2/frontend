@@ -2,15 +2,11 @@ import { List, Typography } from "antd";
 import { Flex } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
+import type { NoteItem } from "../../types/note";
+
+export type { NoteItem };
 
 const { Text } = Typography;
-
-export interface NoteItem {
-  noteId: string;
-  content: string;
-  date: string;
-  createdAt: string;
-}
 
 interface Props {
   groupId: string;

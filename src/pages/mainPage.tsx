@@ -7,37 +7,13 @@ import dayjs, { Dayjs } from "dayjs";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "../store/authStore";
 import { api } from "../api/axios";
+import type { MainData } from "../types/main";
+import type { NoteDateItem } from "../types/note";
 import CreateGroupModal from "../components/group/CreateGroupModal";
 import MyScheduleCalendar from "../components/schedule/MyScheduleCalendar";
 import { WORK_TYPES } from "../components/schedule/scheduleTypes";
 
 const { Title, Text: AntText } = Typography;
-
-interface TodayUser {
-  userId: string;
-  userName: string;
-  userProfile: string | null;
-}
-
-interface TodayNote {
-  noteId: string;
-  content: string;
-  date: string;
-  createdAt: string;
-  user: TodayUser;
-}
-
-interface MainData {
-  todayWorkers: { day: TodayUser[]; night: TodayUser[] };
-  todayNotes: TodayNote[];
-}
-
-interface NoteItem {
-  noteId: string;
-  date: string;
-  content: string;
-  writer: string;
-}
 
 const IndexPage = () => {
   const user = useAuthStore((s) => s.user);
@@ -67,7 +43,7 @@ const IndexPage = () => {
   const calendarSchedule: number[] = calendarData?.schedule ?? [];
   const noteDays: number[] = calendarData?.noteDays ?? [];
 
-  const { data: dateNotes = [], isLoading: notesLoading } = useQuery<NoteItem[]>({
+  const { data: dateNotes = [], isLoading: notesLoading } = useQuery<NoteDateItem[]>({
     queryKey: ["notes-by-date", selectedDate?.format("YYYY-MM-DD")],
     queryFn: () =>
       api

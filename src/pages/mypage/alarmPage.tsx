@@ -5,18 +5,10 @@ import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api/axios";
+import type { NotificationItem } from "../../types/notification";
 import PageHeader from "../../components/common/PageHeader";
 
 const { Text } = Typography;
-
-interface NotificationItem {
-  notificationId: string;
-  type: string;
-  content: string;
-  url: string | null;
-  read: boolean;
-  createdAt: string;
-}
 
 const QUERY_KEY = ["notifications"];
 

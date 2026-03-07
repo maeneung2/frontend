@@ -1,12 +1,9 @@
 import { Button, Popconfirm, Table } from "antd";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
+import type { ScheduleItem } from "../../types/schedule";
 
-export interface ScheduleItem {
-  scheduleId: string;
-  date: string;
-  createdAt: string;
-}
+export type { ScheduleItem };
 
 interface Props {
   groupId: string;

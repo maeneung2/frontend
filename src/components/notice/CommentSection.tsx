@@ -5,15 +5,9 @@ import dayjs from "dayjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api/axios";
 import { useAuthStore } from "../../store/authStore";
+import type { Comment } from "../../types/notice";
 
 const { Text } = Typography;
-
-interface Comment {
-  commentId: string;
-  content: string;
-  writer: string;
-  createdAt: string;
-}
 
 interface Props {
   groupId: string;

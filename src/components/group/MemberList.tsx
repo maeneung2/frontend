@@ -1,14 +1,11 @@
 import { Flex } from "@chakra-ui/react";
 import { Avatar, Button, List, Popconfirm, Tag, Typography } from "antd";
 import { UserOutlined } from "@ant-design/icons";
+import type { Member } from "../../types/group";
+
+export type { Member };
 
 const { Text } = Typography;
-
-export interface Member {
-  userId: string;
-  userName: string;
-  userProfile?: string | null;
-}
 
 interface Props {
   members: Member[];

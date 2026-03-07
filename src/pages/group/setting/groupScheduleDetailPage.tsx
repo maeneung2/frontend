@@ -7,37 +7,12 @@ import dayjs from "dayjs";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../../api/axios";
 import type { InitData } from "../../../components/schedule/scheduleTypes";
+import type { ScheduleDetail } from "../../../types/schedule";
 import ScheduleTable from "../../../components/schedule/ScheduleTable";
 import ScheduleFullscreenOverlay from "../../../components/schedule/ScheduleFullscreenOverlay";
 import PageHeader from "../../../components/common/PageHeader";
 
 const { Text } = Typography;
-
-interface ScheduleWorker {
-  id: string;
-  userId: string;
-  userName: string;
-  userProfile: string | null;
-  isNight: boolean;
-  isNew: boolean;
-  admin: boolean;
-  targetWorkCount: number;
-  scheduleId: string;
-  user?: {
-    userId: string;
-    userName: string;
-    userProfile: string | null;
-  };
-}
-
-interface ScheduleDetail {
-  scheduleId: string;
-  groupId: string;
-  date: string;
-  createdAt: string;
-  schedule: number[][];
-  workers: ScheduleWorker[];
-}
 
 const GroupScheduleDetailPage = () => {
   const { schedule_id } = useParams();

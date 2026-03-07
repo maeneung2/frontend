@@ -6,31 +6,13 @@ import dayjs from "dayjs";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "../../api/axios";
 import { useAuthStore } from "../../store/authStore";
+import type { GroupData } from "../../types/group";
+import type { NoticeItem } from "../../types/notice";
+import type { NoteItem } from "../../types/note";
 import GroupScheduleSection from "../../components/group/GroupScheduleSection";
 import PageHeader from "../../components/common/PageHeader";
 
 const { Text, Title } = Typography;
-
-interface GroupData {
-  groupId: string;
-  groupName: string;
-  groupProfile?: string;
-  owner: string;
-  members: { userId: string; userName: string; userProfile?: string }[];
-}
-
-interface NoticeItem {
-  noticeId: string;
-  title: string;
-  createdAt: string;
-}
-
-interface NoteItem {
-  noteId: string;
-  content: string;
-  date: string;
-  createdAt: string;
-}
 
 const GroupMainPage = () => {
   const { group_id } = useParams();

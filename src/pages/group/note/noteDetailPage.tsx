@@ -6,17 +6,10 @@ import dayjs from "dayjs";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "../../../store/authStore";
 import { api } from "../../../api/axios";
+import type { Note } from "../../../types/note";
 import DetailPageHeader from "../../../components/common/DetailPageHeader";
 
 const { Paragraph } = Typography;
-
-interface Note {
-  noteId: string;
-  content: string;
-  date: string;
-  writer: string;
-  createdAt: string;
-}
 
 const NoteDetailPage = () => {
   const { group_id, note_id } = useParams();
