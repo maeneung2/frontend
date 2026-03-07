@@ -1,7 +1,7 @@
 import { Flex } from "@chakra-ui/react";
 import { Form, Input, Button, Typography } from "antd";
-import { useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
 import { api } from "../../../api/axios";
 import { useAuthStore } from "../../../store/authStore.ts";
 
@@ -11,35 +11,41 @@ const SignupPage = () => {
   const setLogin = useAuthStore((s) => s.setLogin);
   const navigate = useNavigate();
 
-  const handleSignup = useCallback(
-    async ({
+  const { mutate: signup, isPending } = useMutation({
+    mutationFn: ({
       id,
       userName,
       phone,
       password,
-      passwordConfirm,
     }: {
       id: string;
       userName: string;
       phone: string;
       password: string;
-      passwordConfirm: string;
-    }): Promise<void> => {
-      if (password !== passwordConfirm) {
-        alert("비밀번호 불일치");
-        return;
-      }
-      try {
-        const res = await api.post("/api/v1/auth", { id, userName, phone, password });
-        const { accessToken, refreshToken, user } = res.data;
-        setLogin(accessToken, refreshToken, user);
-        navigate("/");
-      } catch {
-        alert("회원가입에 실패했습니다. 다시 시도해주세요.");
-      }
+    }) =>
+      api.post("/api/v1/auth", { id, userName, phone, password }).then((r) => r.data),
+    onSuccess: ({ accessToken, refreshToken, user }) => {
+      setLogin(accessToken, refreshToken, user);
+      navigate("/");
     },
-    [setLogin, navigate]
-  );
+    onError: () => {
+      alert("회원가입에 실패했습니다. 다시 시도해주세요.");
+    },
+  });
+
+  const handleSignup = (values: {
+    id: string;
+    userName: string;
+    phone: string;
+    password: string;
+    passwordConfirm: string;
+  }) => {
+    if (values.password !== values.passwordConfirm) {
+      alert("비밀번호 불일치");
+      return;
+    }
+    signup(values);
+  };
 
   return (
     <Flex flexDir={"column"} justify={"center"} minH={"100vh"} p={6} maxW={400} mx={"auto"}>
@@ -85,7 +91,7 @@ const SignupPage = () => {
           <Input.Password size="large" placeholder="비밀번호 확인" />
         </Form.Item>
 
-        <Button type="primary" htmlType="submit" size="large" block>
+        <Button type="primary" htmlType="submit" size="large" block loading={isPending}>
           회원가입
         </Button>
       </Form>

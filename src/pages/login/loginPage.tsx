@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Form, Input, Button, Divider, Typography } from "antd";
 import { Flex } from "@chakra-ui/react";
 import { GoogleOutlined } from "@ant-design/icons";
+import { useMutation } from "@tanstack/react-query";
 import { api } from "../../api/axios.ts";
 import { useAuthStore } from "../../store/authStore.ts";
 
@@ -16,6 +17,18 @@ const SOCIAL_PROVIDERS = [
 const LoginPage = () => {
   const setLogin = useAuthStore((s) => s.setLogin);
   const navigate = useNavigate();
+
+  const { mutate: login, isPending } = useMutation({
+    mutationFn: ({ id, password }: { id: string; password: string }) =>
+      api.post("/api/v1/auth/login", { id, password }).then((r) => r.data),
+    onSuccess: ({ accessToken, refreshToken, user }) => {
+      setLogin(accessToken, refreshToken, user);
+      navigate("/");
+    },
+    onError: () => {
+      alert("아이디 또는 비밀번호를 확인해주세요.");
+    },
+  });
 
   const handleSocialLogin = (provider: string) => {
     window.location.assign(`${import.meta.env.VITE_API_URL}/oauth/${provider}`);
@@ -32,19 +45,7 @@ const LoginPage = () => {
       </Flex>
 
       {/* 로그인 폼 */}
-      <Form
-        layout="vertical"
-        onFinish={async ({ id, password }) => {
-          try {
-            const res = await api.post("/api/v1/auth/login", { id, password });
-            const { accessToken, refreshToken, user } = res.data;
-            setLogin(accessToken, refreshToken, user);
-            navigate("/");
-          } catch {
-            alert("아이디 또는 비밀번호를 확인해주세요.");
-          }
-        }}
-      >
+      <Form layout="vertical" onFinish={(values) => login(values)}>
         <Form.Item
           label="아이디"
           name="id"
@@ -68,7 +69,7 @@ const LoginPage = () => {
           </Link>
         </Flex>
 
-        <Button type="primary" htmlType="submit" size="large" block>
+        <Button type="primary" htmlType="submit" size="large" block loading={isPending}>
           로그인
         </Button>
       </Form>

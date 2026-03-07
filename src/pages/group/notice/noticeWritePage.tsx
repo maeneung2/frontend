@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Flex } from "@chakra-ui/react";
 import { Form } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "../../../api/axios";
 import NoticeForm from "../../../components/notice/NoticeForm";
 import PageHeader from "../../../components/common/PageHeader";
@@ -10,39 +11,33 @@ const NoticeWritePage = () => {
   const { group_id, notice_id } = useParams();
   const navigate = useNavigate();
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
   const isEdit = !!notice_id;
 
-  useEffect(() => {
-    if (!isEdit) return;
-    const fetch = async () => {
-      try {
-        const res = await api.get(`/api/v1/notice/${group_id}/${notice_id}`);
-        const { title, content } = res.data.data;
-        form.setFieldsValue({ title, content });
-      } catch {
-        alert("공지사항을 불러오는데 실패했습니다.");
-        navigate(-1);
-      }
-    };
-    void fetch();
-  }, [group_id, notice_id, isEdit, form, navigate]);
+  const { data: noticeData, isError } = useQuery({
+    queryKey: ["notice", group_id, notice_id],
+    queryFn: () =>
+      api.get(`/api/v1/notice/${group_id}/${notice_id}`).then((r) => r.data.data),
+    enabled: isEdit,
+  });
 
-  const handleSubmit = async (values: { title: string; content: string }) => {
-    setLoading(true);
-    try {
-      if (isEdit) {
-        await api.patch(`/api/v1/notice/${group_id}/${notice_id}`, values);
-      } else {
-        await api.post("/api/v1/notice", { groupId: group_id, ...values });
-      }
-      navigate(`/group/${group_id}/notice`);
-    } catch {
-      alert(isEdit ? "수정에 실패했습니다." : "작성에 실패했습니다.");
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (noticeData) {
+      form.setFieldsValue({ title: noticeData.title, content: noticeData.content });
     }
-  };
+  }, [noticeData, form]);
+
+  useEffect(() => {
+    if (isError) navigate(-1);
+  }, [isError, navigate]);
+
+  const { mutate: submitNotice, isPending: loading } = useMutation({
+    mutationFn: (values: { title: string; content: string }) =>
+      isEdit
+        ? api.patch(`/api/v1/notice/${group_id}/${notice_id}`, values)
+        : api.post("/api/v1/notice", { groupId: group_id, ...values }),
+    onSuccess: () => navigate(`/group/${group_id}/notice`),
+    onError: () => alert(isEdit ? "수정에 실패했습니다." : "작성에 실패했습니다."),
+  });
 
   return (
     <Flex flexDir={"column"} gap={4} p={4}>
@@ -51,7 +46,7 @@ const NoticeWritePage = () => {
         form={form}
         loading={loading}
         isEdit={isEdit}
-        onSubmit={handleSubmit}
+        onSubmit={submitNotice}
         onCancel={() => navigate(-1)}
       />
     </Flex>

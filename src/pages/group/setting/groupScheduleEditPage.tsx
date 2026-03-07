@@ -4,6 +4,7 @@ import { Button, Typography } from "antd";
 import { FullscreenOutlined } from "@ant-design/icons";
 import { useParams } from "react-router-dom";
 import { Dayjs } from "dayjs";
+import { useMutation } from "@tanstack/react-query";
 import { api } from "../../../api/axios";
 import type { InitData, WorkType } from "../../../components/schedule/scheduleTypes";
 import ScheduleHeader from "../../../components/schedule/ScheduleHeader";
@@ -18,70 +19,85 @@ const GroupScheduleEditPage = () => {
   const { group_id } = useParams();
   const [date, setDate] = useState<Dayjs | null>(null);
   const [initData, setInitData] = useState<InitData | null>(null);
-  const [initLoading, setInitLoading] = useState(false);
   const [schedule, setSchedule] = useState<number[][]>([]);
   const [selectedType, setSelectedType] = useState<WorkType>(1);
   const [fullscreen, setFullscreen] = useState(false);
-  const [saveLoading, setSaveLoading] = useState(false);
-  const [generateLoading, setGenerateLoading] = useState(false);
   const [isGenerated, setIsGenerated] = useState(false);
-
-  const handleInit = async () => {
-    if (!date) return;
-    setInitLoading(true);
-    try {
-      const res = await api.get("/api/v1/schedule/init", {
-        params: { groupId: group_id, date: date.format("YYYY-MM-01") },
-      });
-      const data: InitData = res.data.data;
-      setInitData(data);
-      setSchedule(data.workers.map(() => Array(data.numDays).fill(0)));
-    } catch (err: unknown) {
-      const status = (err as { response?: { status?: number } })?.response?.status;
-      if (status === 409) {
-        alert("해당 월의 스케줄이 이미 존재합니다.");
-      } else {
-        alert("초기 데이터 로드에 실패했습니다.");
-      }
-    } finally {
-      setInitLoading(false);
-    }
-  };
 
   const getDraftKey = () => `schedule_draft_${group_id}_${date?.format("YYYY-MM")}`;
 
-  const handleGenerate = async () => {
-    if (!initData || !date) return;
-    setGenerateLoading(true);
-    try {
-      const key = getDraftKey();
-      const saved = localStorage.getItem(key);
-      let baseSchedule: number[][];
+  const { mutate: initSchedule, isPending: initLoading } = useMutation({
+    mutationFn: () =>
+      api
+        .get("/api/v1/schedule/init", {
+          params: { groupId: group_id, date: date!.format("YYYY-MM-01") },
+        })
+        .then((r) => r.data.data as InitData),
+    onSuccess: (data) => {
+      setInitData(data);
+      setSchedule(data.workers.map(() => Array(data.numDays).fill(0)));
+    },
+    onError: (err: unknown) => {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 409) alert("해당 월의 스케줄이 이미 존재합니다.");
+      else alert("초기 데이터 로드에 실패했습니다.");
+    },
+  });
 
-      if (saved) {
-        baseSchedule = JSON.parse(saved);
-        setSchedule(baseSchedule);
-      } else {
-        baseSchedule = schedule;
-        localStorage.setItem(key, JSON.stringify(schedule));
-      }
-
-      const members = initData.workers.map((w, i) => ({ ...w, isNight: i >= 2 }));
-      const res = await api.post(`/api/v1/schedule/preview`, {
-        groupId: group_id,
-        date: date.format("YYYY-MM-01"),
-        selectedDay: initData.selectedDay,
-        selectedNight: initData.selectedNight,
-        schedule: baseSchedule,
-        members,
-      });
-      setSchedule(res.data.data.schedule);
+  const { mutate: generateSchedule, isPending: generateLoading } = useMutation({
+    mutationFn: (baseSchedule: number[][]) => {
+      const members = initData!.workers.map((w, i) => ({ ...w, isNight: i >= 2 }));
+      return api
+        .post("/api/v1/schedule/preview", {
+          groupId: group_id,
+          date: date!.format("YYYY-MM-01"),
+          selectedDay: initData!.selectedDay,
+          selectedNight: initData!.selectedNight,
+          schedule: baseSchedule,
+          members,
+        })
+        .then((r) => r.data.data.schedule as number[][]);
+    },
+    onSuccess: (generated) => {
+      setSchedule(generated);
       setIsGenerated(true);
-    } catch {
-      alert("시간표 생성에 실패했습니다.");
-    } finally {
-      setGenerateLoading(false);
+    },
+    onError: () => alert("시간표 생성에 실패했습니다."),
+  });
+
+  const { mutate: saveSchedule, isPending: saveLoading } = useMutation({
+    mutationFn: () =>
+      api.post("/api/v1/schedule", {
+        groupId: group_id,
+        date: date!.format("YYYY-MM-01"),
+        selectedDay: [],
+        selectedNight: [],
+        schedule,
+      }),
+    onSuccess: () => alert("저장되었습니다."),
+    onError: () => alert("저장에 실패했습니다."),
+  });
+
+  const handleInit = () => {
+    if (!date) return;
+    initSchedule();
+  };
+
+  const handleGenerate = () => {
+    if (!initData || !date) return;
+    const key = getDraftKey();
+    const saved = localStorage.getItem(key);
+    let baseSchedule: number[][];
+
+    if (saved) {
+      baseSchedule = JSON.parse(saved);
+      setSchedule(baseSchedule);
+    } else {
+      baseSchedule = schedule;
+      localStorage.setItem(key, JSON.stringify(schedule));
     }
+
+    generateSchedule(baseSchedule);
   };
 
   const handleReset = () => {
@@ -92,25 +108,6 @@ const GroupScheduleEditPage = () => {
       localStorage.removeItem(key);
     }
     setIsGenerated(false);
-  };
-
-  const handleSave = async () => {
-    if (!initData || !date) return;
-    setSaveLoading(true);
-    try {
-      await api.post("/api/v1/schedule", {
-        groupId: group_id,
-        date: date.format("YYYY-MM-01"),
-        selectedDay: [],
-        selectedNight: [],
-        schedule,
-      });
-      alert("저장되었습니다.");
-    } catch {
-      alert("저장에 실패했습니다.");
-    } finally {
-      setSaveLoading(false);
-    }
   };
 
   const handleCellClick = (workerIdx: number, dayIdx: number) => {
@@ -154,7 +151,7 @@ const GroupScheduleEditPage = () => {
               saveLoading={saveLoading}
               onGenerate={handleGenerate}
               onReset={handleReset}
-              onSave={handleSave}
+              onSave={() => saveSchedule()}
             />
           </Flex>
         )}

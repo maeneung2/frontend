@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Flex } from "@chakra-ui/react";
 import { Button, Input, message } from "antd";
+import { useMutation } from "@tanstack/react-query";
 import { api } from "../../api/axios";
 
 interface Props {
@@ -10,21 +11,20 @@ interface Props {
 
 const InviteMemberInput = ({ groupId, onSuccess }: Props) => {
   const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  const handleInvite = async () => {
-    if (!email.trim()) return;
-    setLoading(true);
-    try {
-      await api.post(`/api/v1/group/${groupId}/member`, { id: email.trim() });
+  const { mutate: invite, isPending: loading } = useMutation({
+    mutationFn: () => api.post(`/api/v1/group/${groupId}/member`, { id: email.trim() }),
+    onSuccess: () => {
       message.success("초대가 완료되었습니다.");
       setEmail("");
       onSuccess();
-    } catch {
-      message.error("초대에 실패했습니다.");
-    } finally {
-      setLoading(false);
-    }
+    },
+    onError: () => message.error("초대에 실패했습니다."),
+  });
+
+  const handleInvite = () => {
+    if (!email.trim()) return;
+    invite();
   };
 
   return (

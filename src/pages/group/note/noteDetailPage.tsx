@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Flex } from "@chakra-ui/react";
 import { Divider, Spin, Typography } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
-import { api } from "../../../api/axios";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "../../../store/authStore";
+import { api } from "../../../api/axios";
 import DetailPageHeader from "../../../components/common/DetailPageHeader";
 
 const { Paragraph } = Typography;
@@ -21,37 +22,22 @@ const NoteDetailPage = () => {
   const { group_id, note_id } = useParams();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
-  const [note, setNote] = useState<Note | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const { data: note, isLoading: loading, isError } = useQuery<Note>({
+    queryKey: ["note", note_id],
+    queryFn: () => api.get(`/api/v1/note/${note_id}`).then((r) => r.data.data),
+    enabled: !!note_id,
+  });
 
   useEffect(() => {
-    const fetch = async () => {
-      setLoading(true);
-      try {
-        const res = await api.get(`/api/v1/note/${note_id}`);
-        setNote(res.data.data);
-      } catch {
-        alert("인수인계를 불러오는데 실패했습니다.");
-        navigate(-1);
-      } finally {
-        setLoading(false);
-      }
-    };
-    void fetch();
-  }, [note_id, navigate]);
+    if (isError) navigate(-1);
+  }, [isError, navigate]);
 
-  const handleDelete = async () => {
-    setDeleteLoading(true);
-    try {
-      await api.delete(`/api/v1/note/${note_id}`);
-      navigate(`/group/${group_id}/note`);
-    } catch {
-      alert("삭제에 실패했습니다.");
-    } finally {
-      setDeleteLoading(false);
-    }
-  };
+  const { mutate: deleteNote, isPending: deleteLoading } = useMutation({
+    mutationFn: () => api.delete(`/api/v1/note/${note_id}`),
+    onSuccess: () => navigate(`/group/${group_id}/note`),
+    onError: () => alert("삭제에 실패했습니다."),
+  });
 
   if (loading) {
     return (
@@ -70,7 +56,7 @@ const NoteDetailPage = () => {
         subtitle={`작성일: ${dayjs(note.createdAt).format("YYYY-MM-DD HH:mm")}`}
         isOwner={user?.id === note.writer}
         editPath={`/group/${group_id}/note/${note_id}/edit`}
-        onDelete={handleDelete}
+        onDelete={() => deleteNote()}
         deleteLoading={deleteLoading}
         confirmText="인수인계를 삭제하시겠습니까?"
       />

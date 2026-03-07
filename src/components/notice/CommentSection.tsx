@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Flex } from "@chakra-ui/react";
 import { Button, Input, List, Popconfirm, Typography } from "antd";
 import dayjs from "dayjs";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api/axios";
 import { useAuthStore } from "../../store/authStore";
 
@@ -21,70 +22,64 @@ interface Props {
 
 const CommentSection = ({ groupId, noticeId }: Props) => {
   const user = useAuthStore((s) => s.user);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
   const [input, setInput] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
 
-  useEffect(() => {
-    const fetch = async () => {
-      setLoading(true);
-      try {
-        const res = await api.get(`/api/v1/comment/${groupId}/list`, {
-          params: { noticeId },
-        });
-        setComments(res.data.data);
-      } catch {
-        // 조용히 처리
-      } finally {
-        setLoading(false);
-      }
-    };
-    void fetch();
-  }, [groupId, noticeId]);
+  const queryKey = ["comments", groupId, noticeId];
 
-  const handleSubmit = async () => {
-    if (!input.trim()) return;
-    setSubmitting(true);
-    try {
-      const res = await api.post("/api/v1/comment", {
-        groupId,
-        noticeId,
-        content: input.trim(),
-      });
-      setComments((prev) => [...prev, res.data.data]);
+  const { data: comments = [], isLoading: loading } = useQuery<Comment[]>({
+    queryKey,
+    queryFn: () =>
+      api
+        .get(`/api/v1/comment/${groupId}/list`, { params: { noticeId } })
+        .then((r) => r.data.data),
+  });
+
+  const { mutate: submitComment, isPending: submitting } = useMutation({
+    mutationFn: (content: string) =>
+      api
+        .post("/api/v1/comment", { groupId, noticeId, content })
+        .then((r) => r.data.data as Comment),
+    onSuccess: (newComment) => {
+      queryClient.setQueryData<Comment[]>(queryKey, (prev) => [...(prev ?? []), newComment]);
       setInput("");
-    } catch {
-      alert("댓글 등록에 실패했습니다.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+    },
+    onError: () => alert("댓글 등록에 실패했습니다."),
+  });
 
-  const handleEdit = async (commentId: string) => {
-    if (!editContent.trim()) return;
-    try {
-      await api.patch(`/api/v1/comment/${groupId}/${commentId}`, {
-        content: editContent.trim(),
-      });
-      setComments((prev) =>
-        prev.map((c) => (c.commentId === commentId ? { ...c, content: editContent.trim() } : c))
+  const { mutate: editComment } = useMutation({
+    mutationFn: ({ commentId, content }: { commentId: string; content: string }) =>
+      api.patch(`/api/v1/comment/${groupId}/${commentId}`, { content }),
+    onSuccess: (_, { commentId, content }) => {
+      queryClient.setQueryData<Comment[]>(queryKey, (prev) =>
+        prev?.map((c) => (c.commentId === commentId ? { ...c, content } : c)) ?? []
       );
       setEditingId(null);
-    } catch {
-      alert("댓글 수정에 실패했습니다.");
-    }
+    },
+    onError: () => alert("댓글 수정에 실패했습니다."),
+  });
+
+  const { mutate: deleteComment } = useMutation({
+    mutationFn: (commentId: string) =>
+      api.delete(`/api/v1/comment/${groupId}/${commentId}`),
+    onSuccess: (_, commentId) => {
+      queryClient.setQueryData<Comment[]>(queryKey, (prev) =>
+        prev?.filter((c) => c.commentId !== commentId) ?? []
+      );
+    },
+    onError: () => alert("댓글 삭제에 실패했습니다."),
+  });
+
+  const handleSubmit = () => {
+    if (!input.trim()) return;
+    submitComment(input.trim());
   };
 
-  const handleDelete = async (commentId: string) => {
-    try {
-      await api.delete(`/api/v1/comment/${groupId}/${commentId}`);
-      setComments((prev) => prev.filter((c) => c.commentId !== commentId));
-    } catch {
-      alert("댓글 삭제에 실패했습니다.");
-    }
+  const handleEdit = (commentId: string) => {
+    if (!editContent.trim()) return;
+    editComment({ commentId, content: editContent.trim() });
   };
 
   return (
@@ -120,7 +115,7 @@ const CommentSection = ({ groupId, noticeId }: Props) => {
                       </Button>
                       <Popconfirm
                         title="댓글을 삭제하시겠습니까?"
-                        onConfirm={() => handleDelete(comment.commentId)}
+                        onConfirm={() => deleteComment(comment.commentId)}
                         okText="삭제"
                         cancelText="취소"
                         okButtonProps={{ danger: true }}
@@ -141,7 +136,11 @@ const CommentSection = ({ groupId, noticeId }: Props) => {
                       onPressEnter={() => handleEdit(comment.commentId)}
                       size="small"
                     />
-                    <Button size="small" type="primary" onClick={() => handleEdit(comment.commentId)}>
+                    <Button
+                      size="small"
+                      type="primary"
+                      onClick={() => handleEdit(comment.commentId)}
+                    >
                       저장
                     </Button>
                     <Button size="small" onClick={() => setEditingId(null)}>
@@ -164,7 +163,12 @@ const CommentSection = ({ groupId, noticeId }: Props) => {
           onChange={(e) => setInput(e.target.value)}
           onPressEnter={handleSubmit}
         />
-        <Button type="primary" onClick={handleSubmit} loading={submitting} disabled={!input.trim()}>
+        <Button
+          type="primary"
+          onClick={handleSubmit}
+          loading={submitting}
+          disabled={!input.trim()}
+        >
           등록
         </Button>
       </Flex>

@@ -3,7 +3,8 @@
     "allow": [
       "Read(//mnt/c/Users/Damie/WebstormProjects/**)",
       "Read(//mnt/c/Users/Damie/**)",
-      "Bash(pnpm lint:*)"
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm add:*)"
     ]
   }
 }

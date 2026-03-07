@@ -2,6 +2,7 @@ import { Flex } from "@chakra-ui/react";
 import { Avatar, Button, Divider, List, Modal, Switch, Typography } from "antd";
 import { EditOutlined, LogoutOutlined, RightOutlined, UserOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
 import { useAuthStore } from "../../store/authStore";
 import { useThemeStore } from "../../store/themeStore";
 import { api } from "../../api/axios";
@@ -18,20 +19,21 @@ const MypagePage = () => {
 
   const isDark = preference === "dark";
 
+  const { mutate: logout } = useMutation({
+    mutationFn: () => api.post("/api/v1/auth/logout", { refreshToken }),
+    onSettled: () => {
+      clear();
+      navigate("/login");
+    },
+  });
+
   const handleLogout = () => {
     Modal.confirm({
       title: "로그아웃",
       content: "로그아웃 하시겠습니까?",
       okText: "로그아웃",
       cancelText: "취소",
-      onOk: async () => {
-        try {
-          await api.post("/api/v1/auth/logout", { refreshToken });
-        } finally {
-          clear();
-          navigate("/login");
-        }
-      },
+      onOk: () => logout(),
     });
   };
 

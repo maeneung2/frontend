@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Flex } from "@chakra-ui/react";
 import { Avatar, Badge, Button, Drawer, Empty, List, Tag, Typography } from "antd";
 import { BellOutlined, LeftOutlined, RightOutlined, UserOutlined } from "@ant-design/icons";
 import { Link, useNavigate } from "react-router-dom";
 import dayjs, { Dayjs } from "dayjs";
+import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "../store/authStore";
 import { api } from "../api/axios";
 import CreateGroupModal from "../components/group/CreateGroupModal";
@@ -42,58 +43,43 @@ const IndexPage = () => {
   const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const [mainData, setMainData] = useState<MainData | null>(null);
   const [calendarDate, setCalendarDate] = useState<Dayjs>(dayjs().startOf("month"));
-  const [calendarSchedule, setCalendarSchedule] = useState<number[]>([]);
-  const [noteDays, setNoteDays] = useState<number[]>([]);
-  const [calendarLoading, setCalendarLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
-  const [dateNotes, setDateNotes] = useState<NoteItem[]>([]);
-  const [notesLoading, setNotesLoading] = useState(false);
 
-  useEffect(() => {
-    if (!user?.groupId) return;
-    const today = dayjs().format("YYYY-MM-DD");
-    api
-      .get(`/api/v1/main`, { params: { date: today } })
-      .then((res) => setMainData(res.data.data))
-      .catch(() => {});
-  }, [user?.groupId]);
+  const { data: mainData } = useQuery<MainData>({
+    queryKey: ["main", user?.groupId],
+    queryFn: () =>
+      api
+        .get("/api/v1/main", { params: { date: dayjs().format("YYYY-MM-DD") } })
+        .then((r) => r.data.data),
+    enabled: !!user?.groupId,
+  });
 
-  useEffect(() => {
-    if (!user?.groupId) return;
-    const fetch = async () => {
-      setCalendarLoading(true);
-      setCalendarSchedule([]);
-      try {
-        const res = await api.get("/api/v1/main/schedule", {
-          params: { date: calendarDate.format("YYYY-MM-DD") },
-        });
-        setCalendarSchedule(res.data.data?.schedule ?? []);
-        setNoteDays(res.data.data?.noteDays ?? []);
-      } catch {
-        // 조용히 처리
-      } finally {
-        setCalendarLoading(false);
-      }
-    };
-    void fetch();
-  }, [calendarDate, user?.groupId]);
+  const { data: calendarData, isLoading: calendarLoading } = useQuery({
+    queryKey: ["main-schedule", user?.groupId, calendarDate.format("YYYY-MM")],
+    queryFn: () =>
+      api
+        .get("/api/v1/main/schedule", { params: { date: calendarDate.format("YYYY-MM-DD") } })
+        .then((r) => r.data.data),
+    enabled: !!user?.groupId,
+  });
 
-  const handleDayClick = async (day: Dayjs) => {
+  const calendarSchedule: number[] = calendarData?.schedule ?? [];
+  const noteDays: number[] = calendarData?.noteDays ?? [];
+
+  const { data: dateNotes = [], isLoading: notesLoading } = useQuery<NoteItem[]>({
+    queryKey: ["notes-by-date", selectedDate?.format("YYYY-MM-DD")],
+    queryFn: () =>
+      api
+        .get("/api/v1/note/list/by-date", {
+          params: { date: selectedDate!.format("YYYY-MM-DD") },
+        })
+        .then((r) => r.data.data ?? []),
+    enabled: !!selectedDate,
+  });
+
+  const handleDayClick = (day: Dayjs) => {
     setSelectedDate(day);
-    setDateNotes([]);
-    setNotesLoading(true);
-    try {
-      const res = await api.get("/api/v1/note/list/by-date", {
-        params: { date: day.format("YYYY-MM-DD") },
-      });
-      setDateNotes(res.data.data ?? []);
-    } catch {
-      // 조용히 처리
-    } finally {
-      setNotesLoading(false);
-    }
   };
 
   return (

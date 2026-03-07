@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Flex } from "@chakra-ui/react";
 import { Button, Drawer, Empty, List, Spin, Typography } from "antd";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import dayjs, { Dayjs } from "dayjs";
+import { useQuery } from "@tanstack/react-query";
 import { api } from "../../api/axios";
 import MyScheduleCalendar from "../schedule/MyScheduleCalendar";
 
@@ -21,59 +22,49 @@ interface Props {
 
 const MyScheduleSection = ({ groupId }: Props) => {
   const [calendarDate, setCalendarDate] = useState<Dayjs>(dayjs().startOf("month"));
-  const [mySchedule, setMySchedule] = useState<number[]>([]);
-  const [noteDays, setNoteDays] = useState<number[]>([]);
-  const [scheduleLoading, setScheduleLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
-  const [dateNotes, setDateNotes] = useState<NoteItem[]>([]);
-  const [notesLoading, setNotesLoading] = useState(false);
 
-  useEffect(() => {
-    const fetch = async () => {
-      setScheduleLoading(true);
-      setMySchedule([]);
-      setNoteDays([]);
-      try {
-        const [listRes, noteRes] = await Promise.all([
-          api.get("/api/v1/schedule", { params: { groupId } }),
-          api.get("/api/v1/note/list", { params: { groupId } }),
-        ]);
+  const { data: scheduleData, isLoading: scheduleLoading } = useQuery({
+    queryKey: ["my-schedule", groupId, calendarDate.format("YYYY-MM")],
+    queryFn: async () => {
+      const [listRes, noteRes] = await Promise.all([
+        api.get("/api/v1/schedule", { params: { groupId } }),
+        api.get("/api/v1/note/list", { params: { groupId } }),
+      ]);
 
-        const schedules: { scheduleId: string; date: string }[] = listRes.data.data;
-        const matched = schedules.find((s) => dayjs(s.date).isSame(calendarDate, "month"));
-        if (matched) {
-          const meRes = await api.get(`/api/v1/schedule/${matched.scheduleId}/me`);
-          setMySchedule(meRes.data.data.schedule ?? []);
-        }
-
-        const notes: { date: string }[] = noteRes.data.data ?? [];
-        const days = notes
-          .filter((n) => dayjs(n.date).isSame(calendarDate, "month"))
-          .map((n) => dayjs(n.date).date() - 1);
-        setNoteDays(days);
-      } catch {
-        // 조용히 처리
-      } finally {
-        setScheduleLoading(false);
+      const schedules: { scheduleId: string; date: string }[] = listRes.data.data;
+      const matched = schedules.find((s) => dayjs(s.date).isSame(calendarDate, "month"));
+      let mySchedule: number[] = [];
+      if (matched) {
+        const meRes = await api.get(`/api/v1/schedule/${matched.scheduleId}/me`);
+        mySchedule = meRes.data.data.schedule ?? [];
       }
-    };
-    void fetch();
-  }, [groupId, calendarDate]);
 
-  const handleDayClick = async (day: Dayjs) => {
+      const notes: { date: string }[] = noteRes.data.data ?? [];
+      const noteDays = notes
+        .filter((n) => dayjs(n.date).isSame(calendarDate, "month"))
+        .map((n) => dayjs(n.date).date() - 1);
+
+      return { mySchedule, noteDays };
+    },
+  });
+
+  const mySchedule = scheduleData?.mySchedule ?? [];
+  const noteDays = scheduleData?.noteDays ?? [];
+
+  const { data: dateNotes = [], isLoading: notesLoading } = useQuery<NoteItem[]>({
+    queryKey: ["notes-by-date", selectedDate?.format("YYYY-MM-DD")],
+    queryFn: () =>
+      api
+        .get("/api/v1/note/list/by-date", {
+          params: { date: selectedDate!.format("YYYY-MM-DD") },
+        })
+        .then((r) => r.data.data ?? []),
+    enabled: !!selectedDate,
+  });
+
+  const handleDayClick = (day: Dayjs) => {
     setSelectedDate(day);
-    setDateNotes([]);
-    setNotesLoading(true);
-    try {
-      const res = await api.get("/api/v1/note/list/by-date", {
-        params: { date: day.format("YYYY-MM-DD") },
-      });
-      setDateNotes(res.data.data ?? []);
-    } catch {
-      // 조용히 처리
-    } finally {
-      setNotesLoading(false);
-    }
   };
 
   return (

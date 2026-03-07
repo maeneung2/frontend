@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Flex } from "@chakra-ui/react";
 import { Button, Typography, Spin } from "antd";
 import { FullscreenOutlined } from "@ant-design/icons";
 import { useParams } from "react-router-dom";
 import dayjs from "dayjs";
+import { useQuery } from "@tanstack/react-query";
 import { api } from "../../../api/axios";
 import type { InitData } from "../../../components/schedule/scheduleTypes";
 import ScheduleTable from "../../../components/schedule/ScheduleTable";
@@ -39,25 +40,14 @@ interface ScheduleDetail {
 }
 
 const GroupScheduleDetailPage = () => {
-  const { group_id, schedule_id } = useParams();
-  const [detail, setDetail] = useState<ScheduleDetail | null>(null);
-  const [loading, setLoading] = useState(false);
+  const { schedule_id } = useParams();
   const [fullscreen, setFullscreen] = useState(false);
 
-  useEffect(() => {
-    const fetch = async () => {
-      setLoading(true);
-      try {
-        const res = await api.get(`/api/v1/schedule/${schedule_id}`);
-        setDetail(res.data.data);
-      } catch {
-        alert("스케줄을 불러오는데 실패했습니다.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    void fetch();
-  }, [group_id, schedule_id]);
+  const { data: detail, isLoading: loading } = useQuery<ScheduleDetail>({
+    queryKey: ["schedule-detail", schedule_id],
+    queryFn: () => api.get(`/api/v1/schedule/${schedule_id}`).then((r) => r.data.data),
+    enabled: !!schedule_id,
+  });
 
   if (loading) {
     return (

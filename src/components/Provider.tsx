@@ -3,9 +3,13 @@ import { StyleProvider } from "@ant-design/cssinjs";
 import { ConfigProvider } from "antd";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { system, antdLightTheme, antdDarkTheme } from "../theme/theme.ts";
 import { useThemeStore } from "../store/themeStore.ts";
 import Layout from "./Layout.tsx";
+
+const queryClient = new QueryClient();
 
 const Provider = ({ children }: { children: ReactNode | ReactNode[] }) => {
   const preference = useThemeStore((s) => s.preference);
@@ -24,15 +28,18 @@ const Provider = ({ children }: { children: ReactNode | ReactNode[] }) => {
   const colorMode = isDark ? "dark" : "light";
 
   return (
-    <StyleProvider layer>
-      <ConfigProvider theme={isDark ? antdDarkTheme : antdLightTheme}>
-        <ChakraProvider value={system}>
-          <Theme appearance={colorMode}>
-            <Layout>{children}</Layout>
-          </Theme>
-        </ChakraProvider>
-      </ConfigProvider>
-    </StyleProvider>
+    <QueryClientProvider client={queryClient}>
+      <StyleProvider layer>
+        <ConfigProvider theme={isDark ? antdDarkTheme : antdLightTheme}>
+          <ChakraProvider value={system}>
+            <Theme appearance={colorMode}>
+              <Layout>{children}</Layout>
+            </Theme>
+          </ChakraProvider>
+        </ConfigProvider>
+      </StyleProvider>
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
   );
 };
 

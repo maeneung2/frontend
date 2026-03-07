@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
 import { Flex } from "@chakra-ui/react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button, List, Modal, Spin, Typography } from "antd";
 import { SettingOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "../../api/axios";
 import { useAuthStore } from "../../store/authStore";
 import GroupScheduleSection from "../../components/group/GroupScheduleSection";
@@ -36,24 +36,22 @@ const GroupMainPage = () => {
   const { group_id } = useParams();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
-  const [group, setGroup] = useState<GroupData | null>(null);
-  const [notices, setNotices] = useState<NoticeItem[]>([]);
-  const [notes, setNotes] = useState<NoteItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [deleteLoading, setDeleteLoading] = useState(false);
 
-  useEffect(() => {
-    api
-      .get(`/api/v1/group/${group_id}/summary`)
-      .then((res) => {
-        const { group, notices, notes } = res.data.data;
-        setGroup(group);
-        setNotices(notices);
-        setNotes(notes);
-      })
-      .catch(() => setGroup(null))
-      .finally(() => setLoading(false));
-  }, [group_id]);
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ["group-summary", group_id],
+    queryFn: () =>
+      api.get(`/api/v1/group/${group_id}/summary`).then((r) => r.data.data),
+    enabled: !!group_id,
+  });
+
+  const group: GroupData | null = data?.group ?? null;
+  const notices: NoticeItem[] = data?.notices ?? [];
+  const notes: NoteItem[] = data?.notes ?? [];
+
+  const { mutate: deleteGroup, isPending: deleteLoading } = useMutation({
+    mutationFn: () => api.delete(`/api/v1/group/${group_id}`),
+    onSuccess: () => navigate("/"),
+  });
 
   const handleDelete = () => {
     Modal.confirm({
@@ -62,15 +60,7 @@ const GroupMainPage = () => {
       okText: "삭제",
       okType: "danger",
       cancelText: "취소",
-      onOk: async () => {
-        setDeleteLoading(true);
-        try {
-          await api.delete(`/api/v1/group/${group_id}`);
-          navigate("/");
-        } finally {
-          setDeleteLoading(false);
-        }
-      },
+      onOk: () => deleteGroup(),
     });
   };
 

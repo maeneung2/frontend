@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Flex } from "@chakra-ui/react";
 import { Form } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "../../../api/axios";
 import NoteForm from "../../../components/note/NoteForm";
 import PageHeader from "../../../components/common/PageHeader";
@@ -12,40 +13,34 @@ const NoteWritePage = () => {
   const { group_id, note_id } = useParams();
   const navigate = useNavigate();
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
   const isEdit = !!note_id;
 
-  useEffect(() => {
-    if (!isEdit) return;
-    const fetch = async () => {
-      try {
-        const res = await api.get(`/api/v1/note/${note_id}`);
-        const { content, date } = res.data.data;
-        form.setFieldsValue({ content, date: dayjs(date) });
-      } catch {
-        alert("인수인계를 불러오는데 실패했습니다.");
-        navigate(-1);
-      }
-    };
-    void fetch();
-  }, [note_id, isEdit, form, navigate]);
+  const { data: noteData, isError } = useQuery({
+    queryKey: ["note", note_id],
+    queryFn: () => api.get(`/api/v1/note/${note_id}`).then((r) => r.data.data),
+    enabled: isEdit,
+  });
 
-  const handleSubmit = async (values: { content: string; date: Dayjs }) => {
-    setLoading(true);
-    try {
-      const payload = { content: values.content, date: values.date.toISOString() };
-      if (isEdit) {
-        await api.patch(`/api/v1/note/${note_id}`, payload);
-      } else {
-        await api.post("/api/v1/note", { groupId: group_id, ...payload });
-      }
-      navigate(`/group/${group_id}/note`);
-    } catch {
-      alert(isEdit ? "수정에 실패했습니다." : "작성에 실패했습니다.");
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (noteData) {
+      form.setFieldsValue({ content: noteData.content, date: dayjs(noteData.date) });
     }
-  };
+  }, [noteData, form]);
+
+  useEffect(() => {
+    if (isError) navigate(-1);
+  }, [isError, navigate]);
+
+  const { mutate: submitNote, isPending: loading } = useMutation({
+    mutationFn: (values: { content: string; date: Dayjs }) => {
+      const payload = { content: values.content, date: values.date.toISOString() };
+      return isEdit
+        ? api.patch(`/api/v1/note/${note_id}`, payload)
+        : api.post("/api/v1/note", { groupId: group_id, ...payload });
+    },
+    onSuccess: () => navigate(`/group/${group_id}/note`),
+    onError: () => alert(isEdit ? "수정에 실패했습니다." : "작성에 실패했습니다."),
+  });
 
   return (
     <Flex flexDir={"column"} gap={4} p={4}>
@@ -54,7 +49,7 @@ const NoteWritePage = () => {
         form={form}
         loading={loading}
         isEdit={isEdit}
-        onSubmit={handleSubmit}
+        onSubmit={submitNote}
         onCancel={() => navigate(-1)}
       />
     </Flex>

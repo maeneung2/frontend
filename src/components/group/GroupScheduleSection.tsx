@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Flex } from "@chakra-ui/react";
 import { Button, Spin, Typography } from "antd";
 import { FullscreenOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
 import dayjs, { Dayjs } from "dayjs";
+import { useQuery } from "@tanstack/react-query";
 import { api } from "../../api/axios";
 import type { InitData } from "../schedule/scheduleTypes";
 import ScheduleTable from "../schedule/ScheduleTable";
@@ -37,27 +38,17 @@ interface Props {
 
 const GroupScheduleSection = ({ groupId }: Props) => {
   const [calendarDate, setCalendarDate] = useState<Dayjs>(dayjs().startOf("month"));
-  const [detail, setDetail] = useState<ScheduleDetail | null>(null);
-  const [loading, setLoading] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
 
-  useEffect(() => {
-    const fetch = async () => {
-      setLoading(true);
-      setDetail(null);
-      try {
-        const res = await api.get(`/api/v1/group/${groupId}/schedule`, {
+  const { data: detail, isLoading: loading } = useQuery<ScheduleDetail | null>({
+    queryKey: ["group-schedule", groupId, calendarDate.format("YYYY-MM")],
+    queryFn: () =>
+      api
+        .get(`/api/v1/group/${groupId}/schedule`, {
           params: { date: calendarDate.format("YYYY-MM-DD") },
-        });
-        setDetail(res.data.data);
-      } catch {
-        // 조용히 처리
-      } finally {
-        setLoading(false);
-      }
-    };
-    void fetch();
-  }, [groupId, calendarDate]);
+        })
+        .then((r) => r.data.data),
+  });
 
   const initData: InitData | null = detail
     ? {

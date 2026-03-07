@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Flex } from "@chakra-ui/react";
 import { Divider, Spin, Typography } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
-import { api } from "../../../api/axios";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "../../../store/authStore";
+import { api } from "../../../api/axios";
 import CommentSection from "../../../components/notice/CommentSection";
 import DetailPageHeader from "../../../components/common/DetailPageHeader";
 
@@ -22,37 +23,23 @@ const NoticeDetailPage = () => {
   const { group_id, notice_id } = useParams();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
-  const [notice, setNotice] = useState<Notice | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const { data: notice, isLoading: loading, isError } = useQuery<Notice>({
+    queryKey: ["notice", group_id, notice_id],
+    queryFn: () =>
+      api.get(`/api/v1/notice/${group_id}/${notice_id}`).then((r) => r.data.data),
+    enabled: !!group_id && !!notice_id,
+  });
 
   useEffect(() => {
-    const fetch = async () => {
-      setLoading(true);
-      try {
-        const res = await api.get(`/api/v1/notice/${group_id}/${notice_id}`);
-        setNotice(res.data.data);
-      } catch {
-        alert("공지사항을 불러오는데 실패했습니다.");
-        navigate(-1);
-      } finally {
-        setLoading(false);
-      }
-    };
-    void fetch();
-  }, [group_id, notice_id, navigate]);
+    if (isError) navigate(-1);
+  }, [isError, navigate]);
 
-  const handleDelete = async () => {
-    setDeleteLoading(true);
-    try {
-      await api.delete(`/api/v1/notice/${group_id}/${notice_id}`);
-      navigate(`/group/${group_id}/notice`);
-    } catch {
-      alert("삭제에 실패했습니다.");
-    } finally {
-      setDeleteLoading(false);
-    }
-  };
+  const { mutate: deleteNotice, isPending: deleteLoading } = useMutation({
+    mutationFn: () => api.delete(`/api/v1/notice/${group_id}/${notice_id}`),
+    onSuccess: () => navigate(`/group/${group_id}/notice`),
+    onError: () => alert("삭제에 실패했습니다."),
+  });
 
   if (loading) {
     return (
@@ -71,7 +58,7 @@ const NoticeDetailPage = () => {
         subtitle={dayjs(notice.createdAt).format("YYYY-MM-DD HH:mm")}
         isOwner={user?.id === notice.writer}
         editPath={`/group/${group_id}/notice/${notice_id}/edit`}
-        onDelete={handleDelete}
+        onDelete={() => deleteNotice()}
         deleteLoading={deleteLoading}
         confirmText="공지사항을 삭제하시겠습니까?"
       />
