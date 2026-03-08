@@ -16,28 +16,28 @@ import { WORK_TYPES } from "../components/schedule/scheduleTypes";
 const { Title, Text: AntText } = Typography;
 
 const IndexPage = () => {
-  const user = useAuthStore((s) => s.user);
+  const user = useAuthStore((s) => s.user)!;
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [calendarDate, setCalendarDate] = useState<Dayjs>(dayjs().startOf("month"));
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
 
   const { data: mainData } = useQuery<MainData>({
-    queryKey: ["main", user?.groupId],
+    queryKey: ["main", user.groupId],
     queryFn: () =>
       api
         .get("/api/v1/main", { params: { date: dayjs().format("YYYY-MM-DD") } })
         .then((r) => r.data.data),
-    enabled: !!user?.groupId,
+    enabled: !!user.groupId,
   });
 
   const { data: calendarData, isLoading: calendarLoading } = useQuery({
-    queryKey: ["main-schedule", user?.groupId, calendarDate.format("YYYY-MM")],
+    queryKey: ["main-schedule", user.groupId, calendarDate.format("YYYY-MM")],
     queryFn: () =>
       api
         .get("/api/v1/main/schedule", { params: { date: calendarDate.format("YYYY-MM-DD") } })
         .then((r) => r.data.data),
-    enabled: !!user?.groupId,
+    enabled: !!user.groupId,
   });
 
   const calendarSchedule: number[] = calendarData?.schedule ?? [];
@@ -63,14 +63,18 @@ const IndexPage = () => {
       <Flex justify={"space-between"} align={"center"}>
         <Link to={"/mypage"}>
           <Flex align={"center"} gap={2}>
-            <Avatar icon={<UserOutlined />} size={36} />
+            <Avatar
+              src={user.userProfile ?? undefined}
+              icon={!user.userProfile ? <UserOutlined /> : undefined}
+              size={36}
+            />
             <AntText strong style={{ fontSize: 15 }}>
-              {user?.userName}
+              {user.userName}
             </AntText>
           </Flex>
         </Link>
         <Flex align={"center"} gap={2}>
-          {!user?.groupId && <button onClick={() => setOpen(true)}>그룹 추가</button>}
+          {!user.groupId && <button onClick={() => setOpen(true)}>그룹 추가</button>}
           <Link to={"/alarm"}>
             <Badge dot>
               <Button shape="circle" icon={<BellOutlined />} />
@@ -79,7 +83,7 @@ const IndexPage = () => {
         </Flex>
       </Flex>
 
-      {user?.groupId && (
+      {user.groupId && (
         <>
           {/* 내 스케줄 */}
           <Flex flexDir={"column"} gap={3}>
