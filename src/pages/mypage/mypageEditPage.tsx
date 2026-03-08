@@ -10,9 +10,7 @@ import PageHeader from "../../components/common/PageHeader";
 const MypageEditPage = () => {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
-  const setLogin = useAuthStore((s) => s.setLogin);
-  const accessToken = useAuthStore((s) => s.accessToken);
-  const refreshToken = useAuthStore((s) => s.refreshToken);
+  const updateUser = useAuthStore((s) => s.updateUser);
   const [form] = Form.useForm();
 
   useEffect(() => {
@@ -26,7 +24,7 @@ const MypageEditPage = () => {
     mutationFn: (values: { userName: string; phone: string }) =>
       api.patch(`/api/v1/user/${user?.userId}`, values).then((r) => r.data.data),
     onSuccess: (data) => {
-      setLogin(accessToken!, refreshToken!, { ...user!, ...data });
+      updateUser(data);
       navigate(-1);
     },
   });

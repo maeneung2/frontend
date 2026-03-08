@@ -15,10 +15,9 @@ const { Text, Title } = Typography;
 const MypagePage = () => {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
-  const setLogin = useAuthStore((s) => s.setLogin);
-  const accessToken = useAuthStore((s) => s.accessToken);
-  const refreshToken = useAuthStore((s) => s.refreshToken);
+  const updateUser = useAuthStore((s) => s.updateUser);
   const clear = useAuthStore((s) => s.clear);
+  const refreshToken = useAuthStore((s) => s.refreshToken);
   const { preference, setPreference } = useThemeStore();
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -50,7 +49,7 @@ const MypagePage = () => {
     try {
       const url = await uploadImageToS3(file, "profiles");
       const res = await api.patch(`/api/v1/user/${user?.userId}`, { userProfile: url });
-      setLogin(accessToken!, refreshToken!, { ...user!, ...res.data.data });
+      updateUser(res.data.data);
     } catch {
       // 조용히 처리
     } finally {
