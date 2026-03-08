@@ -4,4 +4,5 @@ export interface User {
   userName: string;
   phone: string | null;
   groupId: string | null;
+  userProfile: string | null;
 }
