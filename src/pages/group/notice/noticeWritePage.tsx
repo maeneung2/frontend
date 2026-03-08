@@ -31,10 +31,12 @@ const NoticeWritePage = () => {
   }, [isError, navigate]);
 
   const { mutate: submitNotice, isPending: loading } = useMutation({
-    mutationFn: (values: { title: string; content: string }) =>
-      isEdit
-        ? api.patch(`/api/v1/notice/${group_id}/${notice_id}`, values)
-        : api.post("/api/v1/notice", { groupId: group_id, ...values }),
+    mutationFn: (values: { title: string; content: string; images: string[] }) => {
+      const { images, ...rest } = values;
+      return isEdit
+        ? api.patch(`/api/v1/notice/${group_id}/${notice_id}`, { ...rest, image: images })
+        : api.post("/api/v1/notice", { groupId: group_id, ...rest, image: images });
+    },
     onSuccess: () => navigate(`/group/${group_id}/notice`),
     onError: () => alert(isEdit ? "수정에 실패했습니다." : "작성에 실패했습니다."),
   });
@@ -46,6 +48,7 @@ const NoticeWritePage = () => {
         form={form}
         loading={loading}
         isEdit={isEdit}
+        initialImages={noticeData?.image ?? []}
         onSubmit={submitNotice}
         onCancel={() => navigate(-1)}
       />
