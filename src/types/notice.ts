@@ -8,6 +8,7 @@ export interface Notice {
   noticeId: string;
   title: string;
   content: string;
+  image: string[];
   writer: string;
   createdAt: string;
 }

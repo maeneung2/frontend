@@ -60,6 +60,19 @@ const NoticeDetailPage = () => {
 
       <P style={{ whiteSpace: "pre-wrap", fontSize: 14, minHeight: 120 }}>{notice.content}</P>
 
+      {notice.image?.length > 0 && (
+        <Flex flexDir={"column"} gap={2}>
+          {notice.image.map((url) => (
+            <img
+              key={url}
+              src={url}
+              alt=""
+              style={{ width: "100%", borderRadius: 8, objectFit: "contain" }}
+            />
+          ))}
+        </Flex>
+      )}
+
       <Divider style={{ margin: "4px 0" }} />
 
       <CommentSection groupId={group_id!} noticeId={notice_id!} />
