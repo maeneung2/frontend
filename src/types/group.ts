@@ -1,13 +1,9 @@
-export interface Member {
-  userId: string;
-  userName: string;
-  userProfile?: string | null;
-}
+import type { User } from "./user.ts";
 
 export interface GroupData {
   groupId: string;
   groupName: string;
   groupProfile?: string;
   owner: string;
-  members: Member[];
+  members: User[];
 }

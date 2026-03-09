@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { Flex } from "@chakra-ui/react";
 import { Avatar, Button, Divider, List, Modal, Switch, Typography } from "antd";
-import { CameraOutlined, EditOutlined, LogoutOutlined, RightOutlined, UserOutlined } from "@ant-design/icons";
+import { CameraOutlined, EditOutlined, LogoutOutlined, RightOutlined, TeamOutlined, UserOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { useAuthStore } from "../../store/authStore";
@@ -32,6 +32,22 @@ const MypagePage = () => {
     },
   });
 
+  const { mutate: leaveGroup, isPending: leavingGroup } = useMutation({
+    mutationFn: () => api.delete(`/api/v1/group/${user?.groupId}/leave`),
+    onSuccess: () => {
+      updateUser({ groupId: undefined });
+      navigate("/");
+    },
+    onError: (error: any) => {
+      if (error?.response?.status === 403) {
+        Modal.error({
+          title: "그룹 탈퇴 불가",
+          content: "그룹 소유자는 탈퇴할 수 없습니다. 다른 멤버에게 소유자 권한을 양도한 후 탈퇴해주세요.",
+        });
+      }
+    },
+  });
+
   const handleLogout = () => {
     Modal.confirm({
       title: "로그아웃",
@@ -39,6 +55,17 @@ const MypagePage = () => {
       okText: "로그아웃",
       cancelText: "취소",
       onOk: () => logout(),
+    });
+  };
+
+  const handleLeaveGroup = () => {
+    Modal.confirm({
+      title: "그룹 탈퇴",
+      content: "정말 그룹에서 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+      okText: "탈퇴",
+      okButtonProps: { danger: true },
+      cancelText: "취소",
+      onOk: () => leaveGroup(),
     });
   };
 
@@ -122,6 +149,18 @@ const MypagePage = () => {
             />
           </Flex>
         </List.Item>
+        {user?.groupId && (
+          <List.Item
+            onClick={handleLeaveGroup}
+            style={{ cursor: leavingGroup ? "not-allowed" : "pointer", opacity: leavingGroup ? 0.5 : 1 }}
+            extra={<RightOutlined style={{ color: "#bfbfbf" }} />}
+          >
+            <Flex align={"center"} gap={2}>
+              <TeamOutlined style={{ color: "#ff4d4f" }} />
+              <Text style={{ color: "#ff4d4f" }}>그룹 탈퇴</Text>
+            </Flex>
+          </List.Item>
+        )}
         <List.Item
           onClick={handleLogout}
           style={{ cursor: "pointer" }}
