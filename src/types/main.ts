@@ -12,4 +12,5 @@ export interface MainData {
   group: { groupName: string; groupProfile: string | null };
   todayWorkers: { day: User[]; night: User[] };
   todayNotes: TodayNote[];
+  hasUnreadNotification: boolean;
 }

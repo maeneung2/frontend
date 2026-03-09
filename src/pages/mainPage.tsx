@@ -82,7 +82,7 @@ const IndexPage = () => {
         </Link>
         <Flex align={"center"} gap={2}>
           <Link to={"/alarm"}>
-            <Badge dot>
+            <Badge dot={mainData?.hasUnreadNotification}>
               <Button shape="circle" icon={<BellOutlined />} />
             </Badge>
           </Link>
