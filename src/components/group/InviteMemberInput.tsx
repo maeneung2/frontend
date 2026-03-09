@@ -13,7 +13,7 @@ const InviteMemberInput = ({ groupId, onSuccess }: Props) => {
   const [email, setEmail] = useState("");
 
   const { mutate: invite, isPending: loading } = useMutation({
-    mutationFn: () => api.post(`/api/v1/group/${groupId}/member`, { id: email.trim() }),
+    mutationFn: () => api.post(`/api/v1/invite`, { groupId, id: email.trim() }),
     onSuccess: () => {
       message.success("초대가 완료되었습니다.");
       setEmail("");
