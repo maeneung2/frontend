@@ -4,6 +4,7 @@ import { Avatar, Button, Spin, Typography } from "antd";
 import { SettingOutlined, TeamOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../api/axios";
+import { useAuthStore } from "../../store/authStore";
 import type { GroupData } from "../../types/group";
 import type { NoticeItem } from "../../types/notice";
 import type { NoteItem } from "../../types/note";
@@ -17,6 +18,7 @@ const { Title } = Typography;
 const GroupMainPage = () => {
   const { group_id } = useParams();
   const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user)!;
 
   const { data, isLoading: loading } = useQuery({
     queryKey: ["group-summary", group_id],
@@ -31,6 +33,8 @@ const GroupMainPage = () => {
   if (loading) return <Spin fullscreen />;
   if (!group) return <Flex>그룹을 찾을 수 없습니다.</Flex>;
 
+  const canAccessSettings = user.userId === group.owner || user.admin;
+
   return (
     <Flex flexDir={"column"} gap={4} p={4}>
       <PageHeader
@@ -43,11 +47,13 @@ const GroupMainPage = () => {
           />
         }
         extra={
-          <Button
-            icon={<SettingOutlined />}
-            type="text"
-            onClick={() => navigate(`/group/${group_id}/setting`)}
-          />
+          canAccessSettings && (
+            <Button
+              icon={<SettingOutlined />}
+              type="text"
+              onClick={() => navigate(`/group/${group_id}/setting`)}
+            />
+          )
         }
       />
 

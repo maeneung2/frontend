@@ -1,4 +1,4 @@
-import type { User } from "../interface/user.ts";
+import type { User } from "./user";
 
 /** /api/v1/note/list 응답 아이템 */
 export interface NoteItem {

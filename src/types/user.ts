@@ -5,4 +5,5 @@ export interface User {
   phone: string | null;
   groupId: string | null;
   userProfile: string | null;
+  admin: boolean;
 }

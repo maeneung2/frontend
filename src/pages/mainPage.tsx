@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { Flex } from "@chakra-ui/react";
 import { Avatar, Badge, Button, Drawer, Empty, List, Tag, Typography } from "antd";
-import { BellOutlined, LeftOutlined, RightOutlined, UserOutlined, TeamOutlined } from "@ant-design/icons";
+import {
+  BellOutlined,
+  LeftOutlined,
+  RightOutlined,
+  UserOutlined,
+  TeamOutlined,
+} from "@ant-design/icons";
 import { Link, useNavigate } from "react-router-dom";
 import dayjs, { Dayjs } from "dayjs";
 import { useQuery } from "@tanstack/react-query";
@@ -55,6 +61,7 @@ const IndexPage = () => {
   });
 
   const handleDayClick = (day: Dayjs) => {
+    if (!mainData?.group) return;
     setSelectedDate(day);
   };
 
@@ -74,7 +81,6 @@ const IndexPage = () => {
           </Flex>
         </Link>
         <Flex align={"center"} gap={2}>
-          {!user.groupId && <button onClick={() => setOpen(true)}>그룹 추가</button>}
           <Link to={"/alarm"}>
             <Badge dot>
               <Button shape="circle" icon={<BellOutlined />} />
@@ -83,46 +89,46 @@ const IndexPage = () => {
         </Flex>
       </Flex>
 
-      {user.groupId && (
-        <>
-          {/* 내 스케줄 */}
-          <Flex flexDir={"column"} gap={3}>
-            <Flex justify={"space-between"} align={"center"}>
-              <Title level={5} style={{ margin: 0 }}>
-                내 스케줄
-              </Title>
-              <Flex align={"center"} gap={2}>
-                <Button
-                  icon={<LeftOutlined />}
-                  size="small"
-                  type="text"
-                  onClick={() => setCalendarDate((d) => d.subtract(1, "month"))}
-                />
-                <AntText style={{ fontWeight: 600, minWidth: 80, textAlign: "center" }}>
-                  {calendarDate.format("YYYY년 MM월")}
-                </AntText>
-                <Button
-                  icon={<RightOutlined />}
-                  size="small"
-                  type="text"
-                  onClick={() => setCalendarDate((d) => d.add(1, "month"))}
-                />
-              </Flex>
-            </Flex>
-            {calendarLoading ? (
-              <Flex justify={"center"} p={6}>
-                <AntText type="secondary">불러오는 중...</AntText>
-              </Flex>
-            ) : (
-              <MyScheduleCalendar
-                date={calendarDate}
-                schedule={calendarSchedule}
-                noteDays={noteDays}
-                onDayClick={handleDayClick}
-              />
-            )}
+      {/* 내 스케줄 */}
+      <Flex flexDir={"column"} gap={3}>
+        <Flex justify={"space-between"} align={"center"}>
+          <Title level={5} style={{ margin: 0 }}>
+            내 스케줄
+          </Title>
+          <Flex align={"center"} gap={2}>
+            <Button
+              icon={<LeftOutlined />}
+              size="small"
+              type="text"
+              onClick={() => setCalendarDate((d) => d.subtract(1, "month"))}
+            />
+            <AntText style={{ fontWeight: 600, minWidth: 80, textAlign: "center" }}>
+              {calendarDate.format("YYYY년 MM월")}
+            </AntText>
+            <Button
+              icon={<RightOutlined />}
+              size="small"
+              type="text"
+              onClick={() => setCalendarDate((d) => d.add(1, "month"))}
+            />
           </Flex>
+        </Flex>
+        {calendarLoading ? (
+          <Flex justify={"center"} p={6}>
+            <AntText type="secondary">불러오는 중...</AntText>
+          </Flex>
+        ) : (
+          <MyScheduleCalendar
+            date={calendarDate}
+            schedule={calendarSchedule}
+            noteDays={noteDays}
+            onDayClick={handleDayClick}
+          />
+        )}
+      </Flex>
 
+      {user.groupId ? (
+        <>
           {/* 그룹 바로가기 */}
           <Flex
             align={"center"}
@@ -255,6 +261,21 @@ const IndexPage = () => {
             )}
           </Flex>
         </>
+      ) : (
+        <Flex
+          flexDir={"column"}
+          align={"center"}
+          justify={"center"}
+          gap={4}
+          style={{ padding: "60px 0" }}
+        >
+          <AntText type="secondary" style={{ fontSize: 15 }}>
+            소속된 그룹이 없습니다.
+          </AntText>
+          <Button type="primary" onClick={() => setOpen(true)}>
+            그룹 만들기
+          </Button>
+        </Flex>
       )}
 
       <Drawer

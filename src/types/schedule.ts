@@ -1,3 +1,5 @@
+import type { User } from "./user.ts";
+
 export interface ScheduleItem {
   scheduleId: string;
   date: string;
@@ -11,14 +13,9 @@ export interface ScheduleWorker {
   userProfile: string | null;
   isNight: boolean;
   isNew: boolean;
-  admin: boolean;
   targetWorkCount: number;
   scheduleId: string;
-  user?: {
-    userId: string;
-    userName: string;
-    userProfile: string | null;
-  };
+  user?: User;
 }
 
 export interface ScheduleDetail {
