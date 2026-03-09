@@ -15,12 +15,15 @@ const { Paragraph: P } = Typography;
 const NoticeDetailPage = () => {
   const { group_id, notice_id } = useParams();
   const navigate = useNavigate();
-  const user = useAuthStore((s) => s.user);
+  const user = useAuthStore((s) => s.user)!;
 
-  const { data: notice, isLoading: loading, isError } = useQuery<Notice>({
+  const {
+    data: notice,
+    isLoading: loading,
+    isError,
+  } = useQuery<Notice>({
     queryKey: ["notice", group_id, notice_id],
-    queryFn: () =>
-      api.get(`/api/v1/notice/${group_id}/${notice_id}`).then((r) => r.data.data),
+    queryFn: () => api.get(`/api/v1/notice/${group_id}/${notice_id}`).then((r) => r.data.data),
     enabled: !!group_id && !!notice_id,
   });
 
@@ -49,7 +52,7 @@ const NoticeDetailPage = () => {
       <DetailPageHeader
         title={notice.title}
         subtitle={dayjs(notice.createdAt).format("YYYY-MM-DD HH:mm")}
-        isOwner={user?.id === notice.writer}
+        isOwner={user.userId === notice.writer}
         editPath={`/group/${group_id}/notice/${notice_id}/edit`}
         onDelete={() => deleteNotice()}
         deleteLoading={deleteLoading}

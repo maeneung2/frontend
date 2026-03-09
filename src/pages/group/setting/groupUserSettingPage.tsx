@@ -10,7 +10,7 @@ import PageHeader from "../../../components/common/PageHeader";
 
 const GroupUserSettingPage = () => {
   const { group_id } = useParams();
-  const user = useAuthStore((s) => s.user);
+  const user = useAuthStore((s) => s.user)!;
   const queryClient = useQueryClient();
 
   const queryKey = ["group-members", group_id];
@@ -24,9 +24,12 @@ const GroupUserSettingPage = () => {
   const members: Member[] = data?.members ?? [];
   const owner: string = data?.owner ?? "";
 
-  const { mutate: removeMember, variables: removingVar, isPending: isRemoving } = useMutation({
-    mutationFn: (userId: string) =>
-      api.delete(`/api/v1/group/${group_id}/member/${userId}`),
+  const {
+    mutate: removeMember,
+    variables: removingVar,
+    isPending: isRemoving,
+  } = useMutation({
+    mutationFn: (userId: string) => api.delete(`/api/v1/group/${group_id}/member/${userId}`),
     onSuccess: (_, userId) => {
       queryClient.setQueryData<{ members: Member[]; owner: string }>(queryKey, (prev) =>
         prev ? { ...prev, members: prev.members.filter((m) => m.userId !== userId) } : prev
@@ -52,7 +55,7 @@ const GroupUserSettingPage = () => {
       <MemberList
         members={members}
         owner={owner}
-        currentUserId={user?.id}
+        currentUserId={user.userId}
         loading={membersLoading}
         removingId={removingId}
         onRemove={removeMember}

@@ -1,6 +1,6 @@
 import { Flex } from "@chakra-ui/react";
 import { Avatar, Button, List, Popconfirm, Tag, Typography } from "antd";
-import { UserOutlined } from "@ant-design/icons";
+import { UserOutlined, UserDeleteOutlined } from "@ant-design/icons";
 import type { Member } from "../../types/group";
 
 export type { Member };
@@ -39,9 +39,7 @@ const MemberList = ({ members, owner, currentUserId, loading, removingId, onRemo
                       cancelText="취소"
                       okButtonProps={{ danger: true }}
                     >
-                      <Button size="small" danger loading={removingId === member.userId}>
-                        제거
-                      </Button>
+                      <Button size="small" danger icon={<UserDeleteOutlined />} loading={removingId === member.userId} />
                     </Popconfirm>,
                   ]
                 : []

@@ -1,28 +1,26 @@
 import { Flex } from "@chakra-ui/react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Button, List, Modal, Spin, Typography } from "antd";
-import { SettingOutlined } from "@ant-design/icons";
-import dayjs from "dayjs";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { Avatar, Button, Spin, Typography } from "antd";
+import { SettingOutlined, TeamOutlined } from "@ant-design/icons";
+import { useQuery } from "@tanstack/react-query";
 import { api } from "../../api/axios";
-import { useAuthStore } from "../../store/authStore";
 import type { GroupData } from "../../types/group";
 import type { NoticeItem } from "../../types/notice";
 import type { NoteItem } from "../../types/note";
 import GroupScheduleSection from "../../components/group/GroupScheduleSection";
+import NoteList from "../../components/note/NoteList";
+import NoticeList from "../../components/notice/NoticeList";
 import PageHeader from "../../components/common/PageHeader";
 
-const { Text, Title } = Typography;
+const { Title } = Typography;
 
 const GroupMainPage = () => {
   const { group_id } = useParams();
   const navigate = useNavigate();
-  const user = useAuthStore((s) => s.user);
 
   const { data, isLoading: loading } = useQuery({
     queryKey: ["group-summary", group_id],
-    queryFn: () =>
-      api.get(`/api/v1/group/${group_id}/summary`).then((r) => r.data.data),
+    queryFn: () => api.get(`/api/v1/group/${group_id}/summary`).then((r) => r.data.data),
     enabled: !!group_id,
   });
 
@@ -30,44 +28,26 @@ const GroupMainPage = () => {
   const notices: NoticeItem[] = data?.notices ?? [];
   const notes: NoteItem[] = data?.notes ?? [];
 
-  const { mutate: deleteGroup, isPending: deleteLoading } = useMutation({
-    mutationFn: () => api.delete(`/api/v1/group/${group_id}`),
-    onSuccess: () => navigate("/"),
-  });
-
-  const handleDelete = () => {
-    Modal.confirm({
-      title: "그룹 삭제",
-      content: `'${group?.groupName}' 그룹을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`,
-      okText: "삭제",
-      okType: "danger",
-      cancelText: "취소",
-      onOk: () => deleteGroup(),
-    });
-  };
-
   if (loading) return <Spin fullscreen />;
   if (!group) return <Flex>그룹을 찾을 수 없습니다.</Flex>;
-
-  const isOwner = user?.id === group.owner;
 
   return (
     <Flex flexDir={"column"} gap={4} p={4}>
       <PageHeader
         title={group.groupName}
+        avatar={
+          <Avatar
+            src={group.groupProfile ?? undefined}
+            icon={!group.groupProfile ? <TeamOutlined /> : undefined}
+            size={32}
+          />
+        }
         extra={
-          <Flex gap={2}>
-            <Button
-              icon={<SettingOutlined />}
-              type="text"
-              onClick={() => navigate(`/group/${group_id}/setting`)}
-            />
-            {isOwner && (
-              <Button danger size="small" loading={deleteLoading} onClick={handleDelete}>
-                그룹 삭제
-              </Button>
-            )}
-          </Flex>
+          <Button
+            icon={<SettingOutlined />}
+            type="text"
+            onClick={() => navigate(`/group/${group_id}/setting`)}
+          />
         }
       />
 
@@ -83,25 +63,7 @@ const GroupMainPage = () => {
             더보기
           </Button>
         </Flex>
-        <List
-          dataSource={notices}
-          locale={{ emptyText: "등록된 공지사항이 없습니다." }}
-          renderItem={(item) => (
-            <List.Item
-              onClick={() => navigate(`/group/${group_id}/notice/${item.noticeId}`)}
-              style={{ cursor: "pointer", padding: "10px 4px" }}
-            >
-              <Flex flexDir={"column"} gap={1} style={{ width: "100%" }}>
-                <Text strong style={{ fontSize: 14 }}>
-                  {item.title}
-                </Text>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  {dayjs(item.createdAt).format("YYYY-MM-DD HH:mm")}
-                </Text>
-              </Flex>
-            </List.Item>
-          )}
-        />
+        <NoticeList groupId={group_id!} notices={notices} loading={false} />
       </Flex>
 
       {/* 인수인계 */}
@@ -114,38 +76,7 @@ const GroupMainPage = () => {
             더보기
           </Button>
         </Flex>
-        <List
-          dataSource={notes}
-          locale={{ emptyText: "등록된 인수인계가 없습니다." }}
-          renderItem={(item) => (
-            <List.Item
-              onClick={() => navigate(`/group/${group_id}/note/${item.noteId}`)}
-              style={{ cursor: "pointer", padding: "10px 4px" }}
-            >
-              <Flex flexDir={"column"} gap={1} style={{ width: "100%" }}>
-                <Flex justify={"space-between"} align={"center"}>
-                  <Text strong style={{ fontSize: 14 }}>
-                    {dayjs(item.date).format("YYYY년 MM월 DD일")}
-                  </Text>
-                  <Text type="secondary" style={{ fontSize: 12 }}>
-                    {dayjs(item.createdAt).format("MM-DD HH:mm")}
-                  </Text>
-                </Flex>
-                <Text
-                  type="secondary"
-                  style={{
-                    fontSize: 13,
-                    overflow: "hidden",
-                    whiteSpace: "nowrap",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {item.content}
-                </Text>
-              </Flex>
-            </List.Item>
-          )}
-        />
+        <NoteList groupId={group_id!} notes={notes} loading={false} />
       </Flex>
     </Flex>
   );

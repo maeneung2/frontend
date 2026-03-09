@@ -1,6 +1,9 @@
+import type { User } from "../interface/user.ts";
+
 export interface NoticeItem {
   noticeId: string;
   title: string;
+  user: User;
   createdAt: string;
 }
 

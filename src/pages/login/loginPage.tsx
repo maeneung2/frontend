@@ -35,7 +35,7 @@ const LoginPage = () => {
   };
 
   return (
-    <Flex flexDir={"column"} justify={"center"} minH={"100vh"} p={6} maxW={400} mx={"auto"}>
+    <Flex flexDir={"column"} justify={"center"} h="100%" p={6} maxW={400} mx={"auto"}>
       {/* 헤더 */}
       <Flex flexDir={"column"} align={"center"} gap={2} mb={8}>
         <Title level={2} style={{ margin: 0 }}>

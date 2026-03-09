@@ -104,9 +104,7 @@ const MypagePage = () => {
           </Title>
           <Text type="secondary">{user?.phone ?? "전화번호 없음"}</Text>
         </Flex>
-        <Button icon={<EditOutlined />} size="small" onClick={() => navigate("/mypage/edit")}>
-          프로필 수정
-        </Button>
+        <Button icon={<EditOutlined />} size="small" onClick={() => navigate("/mypage/edit")} />
       </Flex>
 
       <Divider style={{ margin: 0 }} />

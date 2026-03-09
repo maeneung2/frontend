@@ -31,9 +31,14 @@ const NoticeList = ({ groupId, notices, loading }: Props) => {
             <Text strong style={{ fontSize: 14 }}>
               {item.title}
             </Text>
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              {dayjs(item.createdAt).format("YYYY-MM-DD HH:mm")}
-            </Text>
+            <Flex justify={"space-between"}>
+              <Text type={"secondary"} style={{ fontSize: 12 }}>
+                {item.user.userName}
+              </Text>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                {dayjs(item.createdAt).format("YYYY-MM-DD HH:mm")}
+              </Text>
+            </Flex>
           </Flex>
         </List.Item>
       )}

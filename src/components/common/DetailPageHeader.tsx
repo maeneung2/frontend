@@ -41,9 +41,7 @@ const DetailPageHeader = ({
       </Flex>
       {isOwner && (
         <Flex gap={1} flexShrink={0}>
-          <Button icon={<EditOutlined />} size="small" onClick={() => navigate(editPath)}>
-            수정
-          </Button>
+          <Button icon={<EditOutlined />} size="small" onClick={() => navigate(editPath)} />
           <Popconfirm
             title={confirmText}
             onConfirm={onDelete}
@@ -51,9 +49,7 @@ const DetailPageHeader = ({
             cancelText="취소"
             okButtonProps={{ danger: true }}
           >
-            <Button icon={<DeleteOutlined />} size="small" danger loading={deleteLoading}>
-              삭제
-            </Button>
+            <Button icon={<DeleteOutlined />} size="small" danger loading={deleteLoading} />
           </Popconfirm>
         </Flex>
       )}

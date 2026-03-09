@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Flex } from "@chakra-ui/react";
 import { Avatar, Badge, Button, Drawer, Empty, List, Tag, Typography } from "antd";
-import { BellOutlined, LeftOutlined, RightOutlined, UserOutlined } from "@ant-design/icons";
+import { BellOutlined, LeftOutlined, RightOutlined, UserOutlined, TeamOutlined } from "@ant-design/icons";
 import { Link, useNavigate } from "react-router-dom";
 import dayjs, { Dayjs } from "dayjs";
 import { useQuery } from "@tanstack/react-query";
@@ -88,16 +88,9 @@ const IndexPage = () => {
           {/* 내 스케줄 */}
           <Flex flexDir={"column"} gap={3}>
             <Flex justify={"space-between"} align={"center"}>
-              <Flex align={"center"} gap={2}>
-                <Title level={5} style={{ margin: 0 }}>
-                  내 스케줄
-                </Title>
-                <Link to={`/group/${user.groupId}`}>
-                  <AntText type="secondary" style={{ fontSize: 12 }}>
-                    그룹 바로가기 →
-                  </AntText>
-                </Link>
-              </Flex>
+              <Title level={5} style={{ margin: 0 }}>
+                내 스케줄
+              </Title>
               <Flex align={"center"} gap={2}>
                 <Button
                   icon={<LeftOutlined />}
@@ -128,6 +121,37 @@ const IndexPage = () => {
                 onDayClick={handleDayClick}
               />
             )}
+          </Flex>
+
+          {/* 그룹 바로가기 */}
+          <Flex
+            align={"center"}
+            justify={"space-between"}
+            p={"12px 16px"}
+            style={{
+              border: "1px solid #e8e8e8",
+              borderRadius: 10,
+              cursor: "pointer",
+              background: "#fafafa",
+            }}
+            onClick={() => navigate(`/group/${user.groupId}`)}
+          >
+            <Flex align={"center"} gap={3}>
+              <Avatar
+                src={mainData?.group.groupProfile ?? undefined}
+                icon={!mainData?.group.groupProfile ? <TeamOutlined /> : undefined}
+                size={36}
+              />
+              <Flex flexDir={"column"} gap={0}>
+                <AntText strong style={{ fontSize: 14, lineHeight: "20px" }}>
+                  {mainData?.group.groupName ?? ""}
+                </AntText>
+                <AntText type="secondary" style={{ fontSize: 12, lineHeight: "18px" }}>
+                  그룹 홈으로 이동하기
+                </AntText>
+              </Flex>
+            </Flex>
+            <RightOutlined style={{ fontSize: 12, color: "#bfbfbf" }} />
           </Flex>
 
           {/* 오늘 근무자 */}

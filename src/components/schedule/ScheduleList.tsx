@@ -1,4 +1,5 @@
 import { Button, Popconfirm, Table } from "antd";
+import { DeleteOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import type { ScheduleItem } from "../../types/schedule";
@@ -45,11 +46,10 @@ const ScheduleList = ({ groupId, schedules, loading, deletingId, onDelete }: Pro
           <Button
             danger
             size="small"
+            icon={<DeleteOutlined />}
             loading={deletingId === record.scheduleId}
             onClick={(e) => e.stopPropagation()}
-          >
-            삭제
-          </Button>
+          />
         </Popconfirm>
       ),
     },

@@ -13,6 +13,7 @@ export interface TodayNote {
 }
 
 export interface MainData {
+  group: { groupName: string; groupProfile: string | null };
   todayWorkers: { day: TodayUser[]; night: TodayUser[] };
   todayNotes: TodayNote[];
 }

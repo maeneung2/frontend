@@ -1,8 +1,11 @@
+import type { User } from "../interface/user.ts";
+
 /** /api/v1/note/list 응답 아이템 */
 export interface NoteItem {
   noteId: string;
   content: string;
   date: string;
+  user: User;
   createdAt: string;
 }
 

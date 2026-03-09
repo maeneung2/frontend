@@ -14,9 +14,13 @@ const { Paragraph } = Typography;
 const NoteDetailPage = () => {
   const { group_id, note_id } = useParams();
   const navigate = useNavigate();
-  const user = useAuthStore((s) => s.user);
+  const user = useAuthStore((s) => s.user)!;
 
-  const { data: note, isLoading: loading, isError } = useQuery<Note>({
+  const {
+    data: note,
+    isLoading: loading,
+    isError,
+  } = useQuery<Note>({
     queryKey: ["note", note_id],
     queryFn: () => api.get(`/api/v1/note/${note_id}`).then((r) => r.data.data),
     enabled: !!note_id,
@@ -47,7 +51,7 @@ const NoteDetailPage = () => {
       <DetailPageHeader
         title={`${dayjs(note.date).format("YYYY년 MM월 DD일")} 인수인계`}
         subtitle={`작성일: ${dayjs(note.createdAt).format("YYYY-MM-DD HH:mm")}`}
-        isOwner={user?.id === note.writer}
+        isOwner={user.userId === note.writer}
         editPath={`/group/${group_id}/note/${note_id}/edit`}
         onDelete={() => deleteNote()}
         deleteLoading={deleteLoading}

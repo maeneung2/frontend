@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Flex } from "@chakra-ui/react";
 import { Button, Input, List, Popconfirm, Typography } from "antd";
+import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api/axios";
@@ -25,10 +26,7 @@ const CommentSection = ({ groupId, noticeId }: Props) => {
 
   const { data: comments = [], isLoading: loading } = useQuery<Comment[]>({
     queryKey,
-    queryFn: () =>
-      api
-        .get(`/api/v1/comment/${groupId}/list`, { params: { noticeId } })
-        .then((r) => r.data.data),
+    queryFn: () => api.get(`/api/v1/comment/${groupId}/${noticeId}/list`).then((r) => r.data.data),
   });
 
   const { mutate: submitComment, isPending: submitting } = useMutation({
@@ -47,8 +45,9 @@ const CommentSection = ({ groupId, noticeId }: Props) => {
     mutationFn: ({ commentId, content }: { commentId: string; content: string }) =>
       api.patch(`/api/v1/comment/${groupId}/${commentId}`, { content }),
     onSuccess: (_, { commentId, content }) => {
-      queryClient.setQueryData<Comment[]>(queryKey, (prev) =>
-        prev?.map((c) => (c.commentId === commentId ? { ...c, content } : c)) ?? []
+      queryClient.setQueryData<Comment[]>(
+        queryKey,
+        (prev) => prev?.map((c) => (c.commentId === commentId ? { ...c, content } : c)) ?? []
       );
       setEditingId(null);
     },
@@ -56,11 +55,11 @@ const CommentSection = ({ groupId, noticeId }: Props) => {
   });
 
   const { mutate: deleteComment } = useMutation({
-    mutationFn: (commentId: string) =>
-      api.delete(`/api/v1/comment/${groupId}/${commentId}`),
+    mutationFn: (commentId: string) => api.delete(`/api/v1/comment/${groupId}/${commentId}`),
     onSuccess: (_, commentId) => {
-      queryClient.setQueryData<Comment[]>(queryKey, (prev) =>
-        prev?.filter((c) => c.commentId !== commentId) ?? []
+      queryClient.setQueryData<Comment[]>(
+        queryKey,
+        (prev) => prev?.filter((c) => c.commentId !== commentId) ?? []
       );
     },
     onError: () => alert("댓글 삭제에 실패했습니다."),
@@ -85,7 +84,7 @@ const CommentSection = ({ groupId, noticeId }: Props) => {
         dataSource={comments}
         locale={{ emptyText: "첫 번째 댓글을 남겨보세요." }}
         renderItem={(comment) => {
-          const isOwner = user?.id === comment.writer;
+          const isOwner = user?.userId === comment.writer;
           const isEditing = editingId === comment.commentId;
 
           return (
@@ -100,13 +99,12 @@ const CommentSection = ({ groupId, noticeId }: Props) => {
                       <Button
                         size="small"
                         type="text"
+                        icon={<EditOutlined />}
                         onClick={() => {
                           setEditingId(comment.commentId);
                           setEditContent(comment.content);
                         }}
-                      >
-                        수정
-                      </Button>
+                      />
                       <Popconfirm
                         title="댓글을 삭제하시겠습니까?"
                         onConfirm={() => deleteComment(comment.commentId)}
@@ -114,9 +112,7 @@ const CommentSection = ({ groupId, noticeId }: Props) => {
                         cancelText="취소"
                         okButtonProps={{ danger: true }}
                       >
-                        <Button size="small" type="text" danger>
-                          삭제
-                        </Button>
+                        <Button size="small" type="text" danger icon={<DeleteOutlined />} />
                       </Popconfirm>
                     </Flex>
                   )}
@@ -157,12 +153,7 @@ const CommentSection = ({ groupId, noticeId }: Props) => {
           onChange={(e) => setInput(e.target.value)}
           onPressEnter={handleSubmit}
         />
-        <Button
-          type="primary"
-          onClick={handleSubmit}
-          loading={submitting}
-          disabled={!input.trim()}
-        >
+        <Button type="primary" onClick={handleSubmit} loading={submitting} disabled={!input.trim()}>
           등록
         </Button>
       </Flex>
