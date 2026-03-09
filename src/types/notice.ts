@@ -13,6 +13,7 @@ export interface Notice {
   content: string;
   image: string[];
   writer: string;
+  user: User;
   createdAt: string;
 }
 
@@ -20,5 +21,7 @@ export interface Comment {
   commentId: string;
   content: string;
   writer: string;
+  user: User;
   createdAt: string;
+  targetCommentId?: string | null;
 }

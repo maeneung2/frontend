@@ -46,7 +46,7 @@ const NoteList = ({ groupId, notes, loading }: Props) => {
             </Text>
             <Flex justify={"space-between"}>
               <Text type={"secondary"} style={{ fontSize: 12 }}>
-                {item.user.userName}
+                {item.user?.userName}
               </Text>
               <Text type="secondary" style={{ fontSize: 12 }}>
                 {dayjs(item.createdAt).format("MM-DD HH:mm")}

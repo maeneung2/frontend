@@ -51,7 +51,7 @@ const NoticeDetailPage = () => {
     <Flex flexDir={"column"} gap={4} p={4}>
       <DetailPageHeader
         title={notice.title}
-        subtitle={dayjs(notice.createdAt).format("YYYY-MM-DD HH:mm")}
+        subtitle={`${notice.user?.userName ?? ""} · ${dayjs(notice.createdAt).format("YYYY-MM-DD HH:mm")}`}
         isOwner={user.userId === notice.writer}
         editPath={`/group/${group_id}/notice/${notice_id}/edit`}
         onDelete={() => deleteNotice()}

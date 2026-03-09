@@ -50,7 +50,7 @@ const NoteDetailPage = () => {
     <Flex flexDir={"column"} gap={4} p={4}>
       <DetailPageHeader
         title={`${dayjs(note.date).format("YYYY년 MM월 DD일")} 인수인계`}
-        subtitle={`작성일: ${dayjs(note.createdAt).format("YYYY-MM-DD HH:mm")}`}
+        subtitle={`${note.user?.userName ?? ""} · ${dayjs(note.createdAt).format("YYYY-MM-DD HH:mm")}`}
         isOwner={user.userId === note.writer}
         editPath={`/group/${group_id}/note/${note_id}/edit`}
         onDelete={() => deleteNote()}

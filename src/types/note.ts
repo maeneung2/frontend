@@ -23,5 +23,6 @@ export interface Note {
   content: string;
   date: string;
   writer: string;
+  user: User;
   createdAt: string;
 }

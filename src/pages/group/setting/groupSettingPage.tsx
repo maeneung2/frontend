@@ -1,9 +1,9 @@
 import { Flex } from "@chakra-ui/react";
-import { Avatar, List, Modal, Spin, Typography, Upload } from "antd";
+import { Avatar, List, Modal, Typography } from "antd";
 import { CalendarOutlined, CameraOutlined, DeleteOutlined, RightOutlined, TeamOutlined } from "@ant-design/icons";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { api } from "../../../api/axios";
 import { useAuthStore } from "../../../store/authStore";
 import { uploadImageToS3 } from "../../../api/upload";
@@ -41,8 +41,11 @@ const GroupSettingPage = () => {
   const isOwner = user.userId === data?.group?.owner;
 
   const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleProfileChange = async (file: File) => {
+  const handleProfileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
     setUploading(true);
     try {
       const url = await uploadImageToS3(file, "profiles");
@@ -50,6 +53,7 @@ const GroupSettingPage = () => {
       queryClient.invalidateQueries({ queryKey: ["group-summary", group_id] });
     } finally {
       setUploading(false);
+      e.target.value = "";
     }
   };
 
@@ -110,38 +114,41 @@ const GroupSettingPage = () => {
 
       {isOwner && (
         <Flex justify={"center"} py={2}>
-          <Upload
-            showUploadList={false}
-            accept="image/jpeg,image/png,image/webp"
-            beforeUpload={(file) => {
-              void handleProfileChange(file);
-              return false;
-            }}
+          <div
+            style={{ position: "relative", cursor: "pointer" }}
+            onClick={() => fileInputRef.current?.click()}
           >
-            <div style={{ position: "relative", cursor: "pointer" }}>
-              <Avatar
-                src={groupProfile ?? undefined}
-                icon={!groupProfile ? <TeamOutlined /> : undefined}
-                size={80}
-              />
-              <Flex
-                align={"center"}
-                justify={"center"}
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  borderRadius: "50%",
-                  background: "rgba(0,0,0,0.35)",
-                }}
-              >
-                {uploading ? (
-                  <Spin size="small" />
-                ) : (
-                  <CameraOutlined style={{ fontSize: 20, color: "#fff" }} />
-                )}
-              </Flex>
-            </div>
-          </Upload>
+            <Avatar
+              src={groupProfile ?? undefined}
+              icon={!groupProfile ? <TeamOutlined /> : undefined}
+              size={80}
+              style={{ opacity: uploading ? 0.5 : 1 }}
+            />
+            <Flex
+              align={"center"}
+              justify={"center"}
+              style={{
+                position: "absolute",
+                bottom: 0,
+                right: 0,
+                width: 22,
+                height: 22,
+                borderRadius: "50%",
+                background: "#1677ff",
+                color: "#fff",
+                fontSize: 11,
+              }}
+            >
+              <CameraOutlined />
+            </Flex>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            style={{ display: "none" }}
+            onChange={handleProfileChange}
+          />
         </Flex>
       )}
 
