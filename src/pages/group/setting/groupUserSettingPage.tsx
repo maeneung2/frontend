@@ -5,8 +5,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../../api/axios";
 import { useAuthStore } from "../../../store/authStore";
 import InviteMemberInput from "../../../components/group/InviteMemberInput";
-import MemberList, { type Member } from "../../../components/group/MemberList";
+import MemberList from "../../../components/group/MemberList";
 import PageHeader from "../../../components/common/PageHeader";
+import type { User } from "../../../types/user.ts";
 
 const GroupUserSettingPage = () => {
   const { group_id } = useParams();
@@ -21,7 +22,7 @@ const GroupUserSettingPage = () => {
     enabled: !!group_id,
   });
 
-  const members: Member[] = data?.members ?? [];
+  const members: User[] = data?.members ?? [];
   const owner: string = data?.owner ?? "";
 
   const {
@@ -31,7 +32,7 @@ const GroupUserSettingPage = () => {
   } = useMutation({
     mutationFn: (userId: string) => api.delete(`/api/v1/group/${group_id}/member/${userId}`),
     onSuccess: (_, userId) => {
-      queryClient.setQueryData<{ members: Member[]; owner: string }>(queryKey, (prev) =>
+      queryClient.setQueryData<{ members: User[]; owner: string }>(queryKey, (prev) =>
         prev ? { ...prev, members: prev.members.filter((m) => m.userId !== userId) } : prev
       );
       message.success("그룹원을 제거했습니다.");
@@ -48,7 +49,7 @@ const GroupUserSettingPage = () => {
     mutationFn: ({ userId, admin }: { userId: string; admin: boolean }) =>
       api.patch(`/api/v1/user/${userId}/admin`, { admin }),
     onSuccess: (_, { userId, admin }) => {
-      queryClient.setQueryData<{ members: Member[]; owner: string }>(queryKey, (prev) =>
+      queryClient.setQueryData<{ members: User[]; owner: string }>(queryKey, (prev) =>
         prev
           ? {
               ...prev,
@@ -69,7 +70,7 @@ const GroupUserSettingPage = () => {
   } = useMutation({
     mutationFn: (userId: string) => api.patch(`/api/v1/group/${group_id}/owner`, { userId }),
     onSuccess: (_, userId) => {
-      queryClient.setQueryData<{ members: Member[]; owner: string }>(queryKey, (prev) =>
+      queryClient.setQueryData<{ members: User[]; owner: string }>(queryKey, (prev) =>
         prev ? { ...prev, owner: userId } : prev
       );
       message.success("소유자를 양도했습니다.");
