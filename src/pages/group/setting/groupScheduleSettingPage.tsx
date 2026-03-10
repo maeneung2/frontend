@@ -4,6 +4,7 @@ import { PlusOutlined } from "@ant-design/icons";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../../api/axios";
+import { useAuthStore } from "../../../store/authStore";
 import ScheduleList, { type ScheduleItem } from "../../../components/schedule/ScheduleList";
 import PageHeader from "../../../components/common/PageHeader";
 
@@ -11,6 +12,7 @@ const GroupScheduleSettingPage = () => {
   const { group_id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const updateUser = useAuthStore((s) => s.updateUser);
 
   const queryKey = ["schedules", group_id];
 
@@ -22,8 +24,12 @@ const GroupScheduleSettingPage = () => {
   });
 
   const { mutate: deleteSchedule, variables: deletingVar, isPending: isDeleting } = useMutation({
-    mutationFn: (id: string) => api.delete(`/api/v1/schedule/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+    mutationFn: (id: string) =>
+      api.delete(`/api/v1/schedule/${id}`).then((r) => r.data.data),
+    onSuccess: (data) => {
+      if (data?.user) updateUser(data.user);
+      queryClient.invalidateQueries({ queryKey });
+    },
     onError: () => alert("삭제에 실패했습니다."),
   });
 

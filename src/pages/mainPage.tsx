@@ -127,7 +127,7 @@ const IndexPage = () => {
         )}
       </Flex>
 
-      {user.groupId ? (
+      {mainData?.group ? (
         <>
           {/* 그룹 바로가기 */}
           <Flex

@@ -2,6 +2,7 @@ import { Form, Input, Modal } from "antd";
 import { useMutation } from "@tanstack/react-query";
 import { api } from "../../api/axios";
 import { useAuthStore } from "../../store/authStore";
+import type { User } from "../../types/user";
 import { useNavigate } from "react-router-dom";
 
 interface Props {
@@ -11,19 +12,14 @@ interface Props {
 
 const CreateGroupModal = ({ open, onClose }: Props) => {
   const [form] = Form.useForm();
-  const setLogin = useAuthStore((s) => s.setLogin);
+  const updateUser = useAuthStore((s) => s.updateUser);
   const navigate = useNavigate();
 
   const { mutate: createGroup, isPending } = useMutation({
-    mutationFn: async (values: { groupName: string }) => {
-      const res = await api.post("/api/v1/group", values);
-      const groupId = res.data.data.groupId;
-      const meRes = await api.get("/api/v1/user/me");
-      return { groupId, userData: meRes.data };
-    },
-    onSuccess: ({ groupId, userData }) => {
-      const { accessToken, refreshToken } = useAuthStore.getState();
-      setLogin(accessToken!, refreshToken!, userData);
+    mutationFn: (values: { groupName: string }) =>
+      api.post("/api/v1/group", values).then((r) => r.data.data as { groupId: string; user: User }),
+    onSuccess: ({ groupId, user }) => {
+      updateUser(user);
       form.resetFields();
       onClose();
       navigate(`/group/${groupId}`);
