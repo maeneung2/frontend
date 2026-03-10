@@ -70,7 +70,7 @@ const GroupScheduleSection = ({ groupId }: Props) => {
           <Spin />
         </Flex>
       ) : initData && detail ? (
-        <ScheduleTable initData={initData} />
+        <ScheduleTable initData={initData} schedule={initData.workers.map((w) => w.plan)} />
       ) : (
         <Flex justify={"center"} align={"center"} p={6} style={{ color: "#bfbfbf", fontSize: 14 }}>
           해당 월의 스케줄이 없습니다.
@@ -79,7 +79,11 @@ const GroupScheduleSection = ({ groupId }: Props) => {
 
       {fullscreen && initData && detail && (
         <ScheduleFullscreenOverlay onClose={() => setFullscreen(false)}>
-          <ScheduleTable initData={initData} cellSize={44} />
+          <ScheduleTable
+            initData={initData}
+            schedule={initData.workers.map((w) => w.plan)}
+            cellSize={44}
+          />
         </ScheduleFullscreenOverlay>
       )}
     </Flex>
