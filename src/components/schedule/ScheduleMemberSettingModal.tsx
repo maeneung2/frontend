@@ -1,17 +1,9 @@
 import { Avatar, InputNumber, Modal, Switch, Typography } from "antd";
 import { CheckSquareFilled, BorderOutlined, UserOutlined } from "@ant-design/icons";
 import { Flex } from "@chakra-ui/react";
+import type { MemberConfig } from "./scheduleTypes.ts";
 
 const { Text } = Typography;
-
-export interface MemberConfig {
-  userId: string;
-  userName: string;
-  userProfile?: string | null;
-  isNight: boolean;
-  targetWorkCount: number;
-  excluded: boolean;
-}
 
 interface Props {
   open: boolean;
@@ -60,12 +52,12 @@ const ScheduleMemberSettingModal = ({ open, members, onChange, onConfirm }: Prop
             )}
 
             <Avatar
-              src={m.userProfile ?? undefined}
-              icon={!m.userProfile ? <UserOutlined /> : undefined}
+              src={m.user.userProfile ?? undefined}
+              icon={!m.user.userProfile ? <UserOutlined /> : undefined}
               size={32}
               style={{ flexShrink: 0 }}
             />
-            <Text style={{ flex: 1 }}>{m.userName}</Text>
+            <Text style={{ flex: 1 }}>{m.user.userName}</Text>
 
             <Flex align={"center"} gap={1}>
               <Text type="secondary" style={{ fontSize: 12 }}>
@@ -86,9 +78,9 @@ const ScheduleMemberSettingModal = ({ open, members, onChange, onConfirm }: Prop
               size="small"
               min={0}
               max={31}
-              value={m.targetWorkCount}
+              value={m.restCount}
               disabled={m.excluded}
-              onChange={(v) => update(m.userId, { targetWorkCount: v ?? 0 })}
+              onChange={(v) => update(m.userId, { restCount: v ?? 0 })}
               style={{ width: 58 }}
               suffix="휴"
             />

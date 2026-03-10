@@ -5,8 +5,7 @@ import { FullscreenOutlined, LeftOutlined, RightOutlined } from "@ant-design/ico
 import dayjs, { Dayjs } from "dayjs";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../api/axios";
-import type { InitData } from "../schedule/scheduleTypes";
-import type { ScheduleDetail } from "../../types/schedule";
+import type { InitData, ScheduleDetail } from "../schedule/scheduleTypes";
 import ScheduleTable from "../schedule/ScheduleTable";
 import ScheduleFullscreenOverlay from "../schedule/ScheduleFullscreenOverlay";
 
@@ -34,16 +33,10 @@ const GroupScheduleSection = ({ groupId }: Props) => {
     ? {
         numDays: dayjs(detail.date).daysInMonth(),
         firstWeekday: dayjs(detail.date).day(),
-        targetWorkCount: 0,
+        restCount: 0,
         selectedDay: [],
         selectedNight: [],
-        workers: detail.workers.map((w) => ({
-          userId: w.userId ?? w.user?.userId ?? w.id,
-          userName: w.userName ?? w.user?.userName ?? "",
-          userProfile: w.userProfile ?? w.user?.userProfile,
-          isNight: w.isNight,
-          targetWorkCount: w.targetWorkCount,
-        })),
+        workers: detail.workers,
       }
     : null;
 
@@ -77,7 +70,7 @@ const GroupScheduleSection = ({ groupId }: Props) => {
           <Spin />
         </Flex>
       ) : initData && detail ? (
-        <ScheduleTable initData={initData} schedule={detail.schedule} />
+        <ScheduleTable initData={initData} />
       ) : (
         <Flex justify={"center"} align={"center"} p={6} style={{ color: "#bfbfbf", fontSize: 14 }}>
           해당 월의 스케줄이 없습니다.
@@ -86,7 +79,7 @@ const GroupScheduleSection = ({ groupId }: Props) => {
 
       {fullscreen && initData && detail && (
         <ScheduleFullscreenOverlay onClose={() => setFullscreen(false)}>
-          <ScheduleTable initData={initData} schedule={detail.schedule} cellSize={44} />
+          <ScheduleTable initData={initData} cellSize={44} />
         </ScheduleFullscreenOverlay>
       )}
     </Flex>

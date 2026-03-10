@@ -86,7 +86,7 @@ const ScheduleTable = ({ initData, schedule, onCellClick, cellSize = 34 }: Props
                   padding: "4px 8px",
                 }}
               >
-                {worker.userName}
+                {worker.user.userName}
               </td>
               {row.map((val, dIdx) => {
                 const wt = WORK_TYPES[val];

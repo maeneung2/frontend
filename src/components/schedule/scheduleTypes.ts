@@ -1,15 +1,29 @@
+import type { User } from "../../types/user.ts";
+
 export interface Worker {
-  userId: string;
-  userName: string;
-  userProfile?: string | null;
+  workerId: string;
   isNight: boolean;
-  targetWorkCount: number;
+  isNew: boolean;
+  restCount: number;
+  plan: number[];
+  user: User;
+  userId: string;
 }
+
+export interface ScheduleDetail {
+  scheduleId: string;
+  groupId?: string;
+  date: string;
+  createdAt: string;
+  workers: Worker[];
+}
+
+export type MemberConfig = Worker & { excluded: boolean };
 
 export interface InitData {
   numDays: number;
   firstWeekday: number;
-  targetWorkCount: number;
+  restCount: number;
   selectedDay: number[];
   selectedNight: number[];
   workers: Worker[];

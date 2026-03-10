@@ -7,8 +7,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../../api/axios";
-import type { InitData } from "../../../components/schedule/scheduleTypes";
-import type { ScheduleDetail } from "../../../types/schedule";
+import type { InitData, ScheduleDetail } from "../../../components/schedule/scheduleTypes";
 import ScheduleTable from "../../../components/schedule/ScheduleTable";
 import ScheduleFullscreenOverlay from "../../../components/schedule/ScheduleFullscreenOverlay";
 import PageHeader from "../../../components/common/PageHeader";
@@ -40,17 +39,10 @@ const GroupScheduleDetailPage = () => {
   const initData: InitData = {
     numDays: date.daysInMonth(),
     firstWeekday: date.day(),
-    targetWorkCount: 0,
+    restCount: 0,
     selectedDay: [],
     selectedNight: [],
-    workers: detail.workers.map((w) => ({
-      userId: w.userId ?? w.user?.userId ?? w.id,
-      userName: w.userName ?? w.user?.userName ?? "",
-      userProfile: w.userProfile ?? w.user?.userProfile,
-      isNight: w.isNight,
-      targetWorkCount: w.targetWorkCount,
-      admin: w.admin,
-    })),
+    workers: detail.workers,
   };
 
   return (
@@ -63,9 +55,7 @@ const GroupScheduleDetailPage = () => {
               <Button icon={<FullscreenOutlined />} onClick={() => setFullscreen(true)} />
               <Button
                 icon={<EditOutlined />}
-                onClick={() =>
-                  navigate(`/group/${group_id}/setting/schedule/${schedule_id}/edit`)
-                }
+                onClick={() => navigate(`/group/${group_id}/setting/schedule/${schedule_id}/edit`)}
               >
                 편집
               </Button>
@@ -76,12 +66,16 @@ const GroupScheduleDetailPage = () => {
           생성일: {dayjs(detail.createdAt).format("YYYY-MM-DD HH:mm")}
         </Text>
 
-        <ScheduleTable initData={initData} schedule={detail.schedule} />
+        <ScheduleTable initData={initData} schedule={detail.workers.map((w) => w.plan)} />
       </Flex>
 
       {fullscreen && (
         <ScheduleFullscreenOverlay onClose={() => setFullscreen(false)}>
-          <ScheduleTable initData={initData} schedule={detail.schedule} cellSize={44} />
+          <ScheduleTable
+            initData={initData}
+            schedule={detail.workers.map((w) => w.plan)}
+            cellSize={44}
+          />
         </ScheduleFullscreenOverlay>
       )}
     </>

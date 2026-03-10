@@ -6,17 +6,19 @@ import { useNavigate, useParams } from "react-router-dom";
 import dayjs, { Dayjs } from "dayjs";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "../../../api/axios";
-import type { InitData, WorkType } from "../../../components/schedule/scheduleTypes";
-import type { ScheduleDetail } from "../../../types/schedule";
+import type {
+  InitData,
+  WorkType,
+  ScheduleDetail,
+  MemberConfig,
+} from "../../../components/schedule/scheduleTypes";
 import ScheduleHeader from "../../../components/schedule/ScheduleHeader";
 import WorkTypeSelector from "../../../components/schedule/WorkTypeSelector";
 import ScheduleTable from "../../../components/schedule/ScheduleTable";
 import ScheduleActionBar from "../../../components/schedule/ScheduleActionBar";
 import ScheduleFullscreenOverlay from "../../../components/schedule/ScheduleFullscreenOverlay";
 import PageHeader from "../../../components/common/PageHeader";
-import ScheduleMemberSettingModal, {
-  type MemberConfig,
-} from "../../../components/schedule/ScheduleMemberSettingModal";
+import ScheduleMemberSettingModal from "../../../components/schedule/ScheduleMemberSettingModal";
 
 const GroupScheduleEditPage = () => {
   const { group_id, schedule_id } = useParams();
@@ -48,7 +50,7 @@ const GroupScheduleEditPage = () => {
   useEffect(() => {
     if (detail) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSchedule(detail.schedule.map((row) => [...row]));
+      setSchedule(detail.workers.map((w) => [...w.plan]));
     }
   }, [detail?.scheduleId]);
 
@@ -57,40 +59,31 @@ const GroupScheduleEditPage = () => {
     ? {
         numDays: dayjs(detail.date).daysInMonth(),
         firstWeekday: dayjs(detail.date).day(),
-        targetWorkCount: 0,
+        restCount: 0,
         selectedDay: [],
         selectedNight: [],
-        workers: detail.workers.map((w) => ({
-          userId: w.userId ?? w.user?.userId ?? w.id,
-          userName: w.userName ?? w.user?.userName ?? "",
-          userProfile: w.userProfile ?? w.user?.userProfile,
-          isNight: w.isNight,
-          targetWorkCount: w.targetWorkCount,
-        })),
+        workers: detail.workers,
       }
     : null;
 
   const getDraftKey = () => `schedule_draft_${group_id}_${date?.format("YYYY-MM")}`;
 
   // 생성 모드 mutations
-  const { mutate: initSchedule, isPending: initLoading } = useMutation({
+  const { mutate: initSchedule, isPending: initLoading } = useMutation<InitData>({
     mutationFn: () =>
       api
         .get("/api/v1/schedule/init", {
           params: { groupId: group_id, date: date!.format("YYYY-MM-01") },
         })
-        .then((r) => r.data.data as InitData),
-    onSuccess: (data) => {
+        .then((r) => r.data.data),
+    onSuccess: (raw) => {
+      const data: InitData = { ...raw };
       setInitData(data);
-      setSchedule(data.workers.map(() => Array(data.numDays).fill(0)));
+      setSchedule(data.workers.map((w) => w.plan));
       setMemberConfigs(
-        data.workers.map((w) => ({
-          userId: w.userId,
-          userName: w.userName,
-          userProfile: w.userProfile,
-          isNight: w.isNight,
-          targetWorkCount: w.targetWorkCount,
+        raw.workers.map((w) => ({
           excluded: false,
+          ...w,
         }))
       );
       setMemberModalOpen(true);
@@ -103,30 +96,23 @@ const GroupScheduleEditPage = () => {
   });
 
   const { mutate: generateSchedule, isPending: generateLoading } = useMutation({
-    mutationFn: (baseSchedule: number[][]) => {
-      const activeMembers = memberConfigs.filter((m) => !m.excluded);
+    mutationFn: () => {
+      const activeRawWorkers = memberConfigs
+        .filter((w) => !w.excluded)
+        .map((w, idx) => ({ ...w, plan: schedule[idx] }));
+
       return api
         .post("/api/v1/schedule/preview", {
           groupId: group_id,
           date: date!.format("YYYY-MM-01"),
           selectedDay: [],
           selectedNight: [],
-          schedule: baseSchedule,
-          members: activeMembers,
+          workers: activeRawWorkers,
         })
-        .then((r) => r.data.data.schedule as number[][]);
+        .then((r) => r.data.data);
     },
-    onSuccess: (generated) => {
-      setSchedule((prev) => {
-        const next = [...prev];
-        let activeIdx = 0;
-        memberConfigs.forEach((m, i) => {
-          if (!m.excluded) {
-            next[i] = generated[activeIdx++] ?? prev[i];
-          }
-        });
-        return next;
-      });
+    onSuccess: (data: ScheduleDetail) => {
+      setSchedule(data.workers.map((w) => [...w.plan]));
       setIsGenerated(true);
     },
     onError: () => alert("시간표 생성에 실패했습니다."),
@@ -134,23 +120,15 @@ const GroupScheduleEditPage = () => {
 
   const { mutate: saveCreate, isPending: saveCreateLoading } = useMutation({
     mutationFn: () => {
-      const activeMembers = memberConfigs
+      const workers = memberConfigs
         .filter((m) => !m.excluded)
-        .map((m, _, arr) => ({
-          userId: m.userId,
-          userName: m.userName,
-          userProfile: m.userProfile,
-          isNight: m.isNight,
-          targetWorkCount: m.targetWorkCount,
-          scheduleRow: schedule[memberConfigs.indexOf(m)],
-        }));
+        .map((w, idx) => ({ ...w, plan: schedule[idx] }));
       return api.post("/api/v1/schedule", {
         groupId: group_id,
         date: date!.format("YYYY-MM-01"),
         selectedDay: [],
         selectedNight: [],
-        schedule: activeMembers.map((m) => m.scheduleRow),
-        members: activeMembers.map(({ scheduleRow: _, ...m }) => m),
+        workers,
       });
     },
     onSuccess: () => navigate(`/group/${group_id}/setting/schedule`),
@@ -159,7 +137,11 @@ const GroupScheduleEditPage = () => {
 
   // 편집 모드 mutation
   const { mutate: saveEdit, isPending: saveEditLoading } = useMutation({
-    mutationFn: () => api.patch(`/api/v1/schedule/${schedule_id}`, { schedule }),
+    mutationFn: async () => {
+      if (!editInitData) return;
+      const workers = editInitData.workers.map((w, idx) => ({ ...w, plan: schedule[idx] }));
+      return await api.patch(`/api/v1/schedule/${schedule_id}`, { workers });
+    },
     onSuccess: () => navigate(`/group/${group_id}/setting/schedule`),
     onError: () => alert("저장에 실패했습니다."),
   });
@@ -205,13 +187,10 @@ const GroupScheduleEditPage = () => {
       baseSchedule = JSON.parse(saved);
       setSchedule(baseSchedule);
     } else {
-      baseSchedule = schedule;
       localStorage.setItem(key, JSON.stringify(schedule));
     }
-    const activeBaseSchedule = memberConfigs
-      .map((m, i) => (!m.excluded ? baseSchedule[i] : null))
-      .filter((row): row is number[] => row !== null);
-    generateSchedule(activeBaseSchedule);
+
+    generateSchedule();
   };
 
   const handleReset = () => {
@@ -234,29 +213,19 @@ const GroupScheduleEditPage = () => {
   }
 
   // 생성 모드: 제외 멤버 필터링
-  const activeIndices = memberConfigs
-    .map((m, i) => (!m.excluded ? i : -1))
-    .filter((i) => i !== -1);
+  const activeIndices = memberConfigs.map((m, i) => (!m.excluded ? i : -1)).filter((i) => i !== -1);
 
   const createInitData: InitData | null = initData
     ? {
         ...initData,
-        workers: memberConfigs
-          .filter((m) => !m.excluded)
-          .map((m) => ({
-            userId: m.userId,
-            userName: m.userName,
-            userProfile: m.userProfile,
-            isNight: m.isNight,
-            targetWorkCount: m.targetWorkCount,
-          })),
+        workers: memberConfigs.filter((m) => !m.excluded),
       }
     : null;
 
-  const createSchedule = activeIndices.map((i) => schedule[i] ?? []);
+  // const createSchedule = activeIndices.map((i) => schedule[i] ?? []);
 
   const activeInitData = isEditMode ? editInitData : createInitData;
-  const activeSchedule = isEditMode ? schedule : createSchedule;
+  // const activeSchedule = isEditMode ? schedule : createSchedule;
   const saveLoading = isEditMode ? saveEditLoading : saveCreateLoading;
   const title = isEditMode
     ? `${dayjs(detail?.date).format("YYYY년 MM월")} 스케줄 편집`
@@ -289,7 +258,7 @@ const GroupScheduleEditPage = () => {
             </Flex>
             <ScheduleTable
               initData={activeInitData}
-              schedule={activeSchedule}
+              schedule={schedule}
               onCellClick={handleCellClick}
             />
             {isEditMode ? (
@@ -327,7 +296,7 @@ const GroupScheduleEditPage = () => {
           </Flex>
           <ScheduleTable
             initData={activeInitData}
-            schedule={activeSchedule}
+            schedule={schedule}
             onCellClick={handleCellClick}
             cellSize={44}
           />
