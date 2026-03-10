@@ -7,12 +7,13 @@ interface Props {
   onDateChange: (date: Dayjs | null) => void;
   onInit: () => void;
   initLoading: boolean;
+  initialized: boolean;
 }
 
-const ScheduleHeader = ({ date, onDateChange, onInit, initLoading }: Props) => (
+const ScheduleHeader = ({ date, onDateChange, onInit, initLoading, initialized }: Props) => (
   <Flex gap={2} align={"center"}>
-    <DatePicker picker="month" value={date} onChange={onDateChange} placeholder="월 선택" />
-    <Button onClick={onInit} loading={initLoading} disabled={!date}>
+    <DatePicker picker="month" value={date} onChange={onDateChange} placeholder="월 선택" disabled={initialized} />
+    <Button onClick={onInit} loading={initLoading} disabled={!date || initialized}>
       불러오기
     </Button>
   </Flex>

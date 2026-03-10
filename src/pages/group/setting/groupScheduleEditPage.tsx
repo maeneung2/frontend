@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Flex } from "@chakra-ui/react";
-import { Button, Typography } from "antd";
+import { Button, Modal } from "antd";
 import { FullscreenOutlined } from "@ant-design/icons";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Dayjs } from "dayjs";
 import { useMutation } from "@tanstack/react-query";
 import { api } from "../../../api/axios";
@@ -12,11 +12,11 @@ import WorkTypeSelector from "../../../components/schedule/WorkTypeSelector";
 import ScheduleTable from "../../../components/schedule/ScheduleTable";
 import ScheduleActionBar from "../../../components/schedule/ScheduleActionBar";
 import ScheduleFullscreenOverlay from "../../../components/schedule/ScheduleFullscreenOverlay";
-
-const { Title } = Typography;
+import PageHeader from "../../../components/common/PageHeader";
 
 const GroupScheduleEditPage = () => {
   const { group_id } = useParams();
+  const navigate = useNavigate();
   const [date, setDate] = useState<Dayjs | null>(null);
   const [initData, setInitData] = useState<InitData | null>(null);
   const [schedule, setSchedule] = useState<number[][]>([]);
@@ -110,6 +110,24 @@ const GroupScheduleEditPage = () => {
     setIsGenerated(false);
   };
 
+  const handleBack = () => {
+    if (!initData) {
+      navigate(-1);
+      return;
+    }
+    Modal.confirm({
+      title: "페이지를 나가시겠습니까?",
+      content: "작업 중인 내용이 사라집니다.",
+      okText: "나가기",
+      cancelText: "취소",
+      okButtonProps: { danger: true },
+      onOk: () => {
+        localStorage.removeItem(getDraftKey());
+        navigate(-1);
+      },
+    });
+  };
+
   const handleCellClick = (workerIdx: number, dayIdx: number) => {
     setSchedule((prev) => {
       const next = prev.map((row) => [...row]);
@@ -124,13 +142,14 @@ const GroupScheduleEditPage = () => {
   return (
     <>
       <Flex flexDir={"column"} gap={4} p={4}>
-        <Title level={4}>스케줄 생성</Title>
+        <PageHeader title="스케줄 생성" onBack={handleBack} />
 
         <ScheduleHeader
           date={date}
           onDateChange={setDate}
           onInit={handleInit}
           initLoading={initLoading}
+          initialized={!!initData}
         />
 
         {initData && (

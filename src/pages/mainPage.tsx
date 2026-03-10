@@ -34,7 +34,6 @@ const IndexPage = () => {
       api
         .get("/api/v1/main", { params: { date: dayjs().format("YYYY-MM-DD") } })
         .then((r) => r.data.data),
-    enabled: !!user.groupId,
   });
 
   const { data: calendarData, isLoading: calendarLoading } = useQuery({
