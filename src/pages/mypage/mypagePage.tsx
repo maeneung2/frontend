@@ -38,8 +38,8 @@ const MypagePage = () => {
       updateUser({ groupId: undefined });
       navigate("/");
     },
-    onError: (error: any) => {
-      if (error?.response?.status === 403) {
+    onError: (error: unknown) => {
+      if ((error as { response?: { status?: number } })?.response?.status === 403) {
         Modal.error({
           title: "그룹 탈퇴 불가",
           content: "그룹 소유자는 탈퇴할 수 없습니다. 다른 멤버에게 소유자 권한을 양도한 후 탈퇴해주세요.",
