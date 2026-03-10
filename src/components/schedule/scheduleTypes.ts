@@ -4,7 +4,6 @@ export interface Worker {
   userProfile?: string | null;
   isNight: boolean;
   targetWorkCount: number;
-  admin: boolean;
 }
 
 export interface InitData {

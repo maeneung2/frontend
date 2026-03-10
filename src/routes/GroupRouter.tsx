@@ -31,6 +31,7 @@ const GroupRouter: RouteObject = {
     { path: "/group/:group_id/setting/schedule", element: <GroupScheduleSettingPage /> },
     { path: "/group/:group_id/setting/schedule/create", element: <GroupScheduleEditPage /> },
     { path: "/group/:group_id/setting/schedule/:schedule_id", element: <GroupScheduleDetailPage /> },
+    { path: "/group/:group_id/setting/schedule/:schedule_id/edit", element: <GroupScheduleEditPage /> },
     { path: "/group/:group_id/setting/user", element: <GroupUserSettingPage /> },
   ],
 };

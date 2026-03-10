@@ -1,5 +1,5 @@
-import { Button, Popconfirm, Table } from "antd";
-import { DeleteOutlined } from "@ant-design/icons";
+import { Button, Flex, Popconfirm, Table } from "antd";
+import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import type { ScheduleItem } from "../../types/schedule";
@@ -33,24 +33,32 @@ const ScheduleList = ({ groupId, schedules, loading, deletingId, onDelete }: Pro
     {
       title: "",
       key: "action",
-      width: 80,
+      width: 100,
       render: (_: unknown, record: ScheduleItem) => (
-        <Popconfirm
-          title="스케줄을 삭제하시겠습니까?"
-          onConfirm={() => onDelete(record.scheduleId)}
-          okText="삭제"
-          cancelText="취소"
-          okButtonProps={{ danger: true }}
-          onPopupClick={(e) => e.stopPropagation()}
-        >
+        <Flex gap={1} onClick={(e) => e.stopPropagation()}>
           <Button
-            danger
             size="small"
-            icon={<DeleteOutlined />}
-            loading={deletingId === record.scheduleId}
-            onClick={(e) => e.stopPropagation()}
+            icon={<EditOutlined />}
+            onClick={() =>
+              navigate(`/group/${groupId}/setting/schedule/${record.scheduleId}/edit`)
+            }
           />
-        </Popconfirm>
+          <Popconfirm
+            title="스케줄을 삭제하시겠습니까?"
+            onConfirm={() => onDelete(record.scheduleId)}
+            okText="삭제"
+            cancelText="취소"
+            okButtonProps={{ danger: true }}
+            onPopupClick={(e) => e.stopPropagation()}
+          >
+            <Button
+              danger
+              size="small"
+              icon={<DeleteOutlined />}
+              loading={deletingId === record.scheduleId}
+            />
+          </Popconfirm>
+        </Flex>
       ),
     },
   ];

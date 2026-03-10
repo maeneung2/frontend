@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Flex } from "@chakra-ui/react";
-import { Button, Modal } from "antd";
+import { Button, Modal, Spin } from "antd";
 import { FullscreenOutlined } from "@ant-design/icons";
 import { useNavigate, useParams } from "react-router-dom";
-import { Dayjs } from "dayjs";
-import { useMutation } from "@tanstack/react-query";
+import dayjs, { Dayjs } from "dayjs";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "../../../api/axios";
 import type { InitData, WorkType } from "../../../components/schedule/scheduleTypes";
+import type { ScheduleDetail } from "../../../types/schedule";
 import ScheduleHeader from "../../../components/schedule/ScheduleHeader";
 import WorkTypeSelector from "../../../components/schedule/WorkTypeSelector";
 import ScheduleTable from "../../../components/schedule/ScheduleTable";
@@ -15,17 +16,58 @@ import ScheduleFullscreenOverlay from "../../../components/schedule/ScheduleFull
 import PageHeader from "../../../components/common/PageHeader";
 
 const GroupScheduleEditPage = () => {
-  const { group_id } = useParams();
+  const { group_id, schedule_id } = useParams();
   const navigate = useNavigate();
-  const [date, setDate] = useState<Dayjs | null>(null);
-  const [initData, setInitData] = useState<InitData | null>(null);
+  const isEditMode = !!schedule_id;
+
+  // 공통 상태
   const [schedule, setSchedule] = useState<number[][]>([]);
   const [selectedType, setSelectedType] = useState<WorkType>(1);
   const [fullscreen, setFullscreen] = useState(false);
+
+  // 생성 모드 전용
+  const [date, setDate] = useState<Dayjs | null>(null);
+  const [initData, setInitData] = useState<InitData | null>(null);
   const [isGenerated, setIsGenerated] = useState(false);
+
+  // 편집 모드 전용
+  const [isDirty, setIsDirty] = useState(false);
+
+  // 편집 모드: 기존 스케줄 로드
+  const { data: detail, isLoading: detailLoading } = useQuery<ScheduleDetail>({
+    queryKey: ["schedule-detail", schedule_id],
+    queryFn: () => api.get(`/api/v1/schedule/${schedule_id}`).then((r) => r.data.data),
+    enabled: isEditMode,
+  });
+
+  useEffect(() => {
+    if (detail) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSchedule(detail.schedule.map((row) => [...row]));
+    }
+  }, [detail?.scheduleId]);
+
+  // 편집 모드: initData 빌드
+  const editInitData: InitData | null = detail
+    ? {
+        numDays: dayjs(detail.date).daysInMonth(),
+        firstWeekday: dayjs(detail.date).day(),
+        targetWorkCount: 0,
+        selectedDay: [],
+        selectedNight: [],
+        workers: detail.workers.map((w) => ({
+          userId: w.userId ?? w.user?.userId ?? w.id,
+          userName: w.userName ?? w.user?.userName ?? "",
+          userProfile: w.userProfile ?? w.user?.userProfile,
+          isNight: w.isNight,
+          targetWorkCount: w.targetWorkCount,
+        })),
+      }
+    : null;
 
   const getDraftKey = () => `schedule_draft_${group_id}_${date?.format("YYYY-MM")}`;
 
+  // 생성 모드 mutations
   const { mutate: initSchedule, isPending: initLoading } = useMutation({
     mutationFn: () =>
       api
@@ -65,7 +107,7 @@ const GroupScheduleEditPage = () => {
     onError: () => alert("시간표 생성에 실패했습니다."),
   });
 
-  const { mutate: saveSchedule, isPending: saveLoading } = useMutation({
+  const { mutate: saveCreate, isPending: saveCreateLoading } = useMutation({
     mutationFn: () =>
       api.post("/api/v1/schedule", {
         groupId: group_id,
@@ -78,51 +120,30 @@ const GroupScheduleEditPage = () => {
     onError: () => alert("저장에 실패했습니다."),
   });
 
-  const handleInit = () => {
-    if (!date) return;
-    initSchedule();
-  };
-
-  const handleGenerate = () => {
-    if (!initData || !date) return;
-    const key = getDraftKey();
-    const saved = localStorage.getItem(key);
-    let baseSchedule: number[][];
-
-    if (saved) {
-      baseSchedule = JSON.parse(saved);
-      setSchedule(baseSchedule);
-    } else {
-      baseSchedule = schedule;
-      localStorage.setItem(key, JSON.stringify(schedule));
-    }
-
-    generateSchedule(baseSchedule);
-  };
-
-  const handleReset = () => {
-    const key = getDraftKey();
-    const saved = localStorage.getItem(key);
-    if (saved) {
-      setSchedule(JSON.parse(saved));
-      localStorage.removeItem(key);
-    }
-    setIsGenerated(false);
-  };
+  // 편집 모드 mutation
+  const { mutate: saveEdit, isPending: saveEditLoading } = useMutation({
+    mutationFn: () => api.patch(`/api/v1/schedule/${schedule_id}`, { schedule }),
+    onSuccess: () => {
+      setIsDirty(false);
+      navigate(-1);
+    },
+    onError: () => alert("저장에 실패했습니다."),
+  });
 
   const handleBack = () => {
-    if (!initData) {
+    const hasWork = isEditMode ? isDirty : !!initData;
+    if (!hasWork) {
       navigate(-1);
       return;
     }
     Modal.confirm({
       title: "페이지를 나가시겠습니까?",
-      content: "작업 중인 내용이 사라집니다.",
+      content: isEditMode ? "저장하지 않은 변경사항이 사라집니다." : "작업 중인 내용이 사라집니다.",
       okText: "나가기",
       cancelText: "취소",
       okButtonProps: { danger: true },
       onOk: () => {
-        localStorage.removeItem(getDraftKey());
+        if (!isEditMode) localStorage.removeItem(getDraftKey());
         navigate(-1);
       },
     });
@@ -137,22 +158,65 @@ const GroupScheduleEditPage = () => {
       }
       return next;
     });
+    if (isEditMode) setIsDirty(true);
   };
+
+  const handleGenerate = () => {
+    if (!initData || !date) return;
+    const key = getDraftKey();
+    const saved = localStorage.getItem(key);
+    let baseSchedule: number[][];
+    if (saved) {
+      baseSchedule = JSON.parse(saved);
+      setSchedule(baseSchedule);
+    } else {
+      baseSchedule = schedule;
+      localStorage.setItem(key, JSON.stringify(schedule));
+    }
+    generateSchedule(baseSchedule);
+  };
+
+  const handleReset = () => {
+    const key = getDraftKey();
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      setSchedule(JSON.parse(saved));
+      localStorage.removeItem(key);
+    }
+    setIsGenerated(false);
+  };
+
+  // 편집 모드 로딩
+  if (isEditMode && detailLoading) {
+    return (
+      <Flex justify={"center"} align={"center"} p={8}>
+        <Spin />
+      </Flex>
+    );
+  }
+
+  const activeInitData = isEditMode ? editInitData : initData;
+  const saveLoading = isEditMode ? saveEditLoading : saveCreateLoading;
+  const title = isEditMode
+    ? `${dayjs(detail?.date).format("YYYY년 MM월")} 스케줄 편집`
+    : "스케줄 생성";
 
   return (
     <>
       <Flex flexDir={"column"} gap={4} p={4}>
-        <PageHeader title="스케줄 생성" onBack={handleBack} />
+        <PageHeader title={title} onBack={handleBack} />
 
-        <ScheduleHeader
-          date={date}
-          onDateChange={setDate}
-          onInit={handleInit}
-          initLoading={initLoading}
-          initialized={!!initData}
-        />
+        {!isEditMode && (
+          <ScheduleHeader
+            date={date}
+            onDateChange={setDate}
+            onInit={() => date && initSchedule()}
+            initLoading={initLoading}
+            initialized={!!initData}
+          />
+        )}
 
-        {initData && (
+        {activeInitData && (
           <Flex flexDir={"column"} gap={3}>
             <Flex justify={"space-between"} align={"center"}>
               <WorkTypeSelector selectedType={selectedType} onSelect={setSelectedType} />
@@ -163,26 +227,38 @@ const GroupScheduleEditPage = () => {
                 style={{ flexShrink: 0 }}
               />
             </Flex>
-            <ScheduleTable initData={initData} schedule={schedule} onCellClick={handleCellClick} />
-            <ScheduleActionBar
-              isGenerated={isGenerated}
-              generateLoading={generateLoading}
-              saveLoading={saveLoading}
-              onGenerate={handleGenerate}
-              onReset={handleReset}
-              onSave={() => saveSchedule()}
+            <ScheduleTable
+              initData={activeInitData}
+              schedule={schedule}
+              onCellClick={handleCellClick}
             />
+            {isEditMode ? (
+              <Flex justify={"flex-end"} mt={1}>
+                <Button type="primary" loading={saveLoading} onClick={() => saveEdit()}>
+                  저장
+                </Button>
+              </Flex>
+            ) : (
+              <ScheduleActionBar
+                isGenerated={isGenerated}
+                generateLoading={generateLoading}
+                saveLoading={saveLoading}
+                onGenerate={handleGenerate}
+                onReset={handleReset}
+                onSave={() => saveCreate()}
+              />
+            )}
           </Flex>
         )}
       </Flex>
 
-      {fullscreen && initData && (
+      {fullscreen && activeInitData && (
         <ScheduleFullscreenOverlay onClose={() => setFullscreen(false)}>
           <Flex justify={"space-between"} align={"center"} flexShrink={0}>
             <WorkTypeSelector selectedType={selectedType} onSelect={setSelectedType} />
           </Flex>
           <ScheduleTable
-            initData={initData}
+            initData={activeInitData}
             schedule={schedule}
             onCellClick={handleCellClick}
             cellSize={44}

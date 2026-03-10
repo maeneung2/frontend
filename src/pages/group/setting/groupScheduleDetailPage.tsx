@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Flex } from "@chakra-ui/react";
 import { Button, Typography, Spin } from "antd";
-import { FullscreenOutlined } from "@ant-design/icons";
-import { useParams } from "react-router-dom";
+import { EditOutlined, FullscreenOutlined } from "@ant-design/icons";
+import { useNavigate, useParams } from "react-router-dom";
+
 import dayjs from "dayjs";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../../api/axios";
@@ -15,7 +16,8 @@ import PageHeader from "../../../components/common/PageHeader";
 const { Text } = Typography;
 
 const GroupScheduleDetailPage = () => {
-  const { schedule_id } = useParams();
+  const { group_id, schedule_id } = useParams();
+  const navigate = useNavigate();
   const [fullscreen, setFullscreen] = useState(false);
 
   const { data: detail, isLoading: loading } = useQuery<ScheduleDetail>({
@@ -56,7 +58,19 @@ const GroupScheduleDetailPage = () => {
       <Flex flexDir={"column"} gap={4} p={4}>
         <PageHeader
           title={`${date.format("YYYY년 MM월")} 스케줄`}
-          extra={<Button icon={<FullscreenOutlined />} onClick={() => setFullscreen(true)} />}
+          extra={
+            <Flex gap={2}>
+              <Button icon={<FullscreenOutlined />} onClick={() => setFullscreen(true)} />
+              <Button
+                icon={<EditOutlined />}
+                onClick={() =>
+                  navigate(`/group/${group_id}/setting/schedule/${schedule_id}/edit`)
+                }
+              >
+                편집
+              </Button>
+            </Flex>
+          }
         />
         <Text type="secondary" style={{ fontSize: 12 }}>
           생성일: {dayjs(detail.createdAt).format("YYYY-MM-DD HH:mm")}
