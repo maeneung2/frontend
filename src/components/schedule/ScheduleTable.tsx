@@ -32,6 +32,7 @@ const ScheduleTable = ({ initData, schedule, onCellClick, cellSize = 34 }: Props
               {i + 1}
             </th>
           ))}
+          <th style={{ ...cellStyle, minWidth: 40, background: "#fafafa" }}>휴일</th>
         </tr>
         <tr>
           <th
@@ -63,48 +64,64 @@ const ScheduleTable = ({ initData, schedule, onCellClick, cellSize = 34 }: Props
               </th>
             );
           })}
+          <th style={{ ...cellStyle, background: "#fafafa" }} />
         </tr>
       </thead>
       <tbody>
-        {initData.workers.map((worker, wIdx) => (
-          <tr key={worker.userId}>
-            <td
-              style={{
-                ...cellStyle,
-                minWidth: 72,
-                background: "#fafafa",
-                position: "sticky",
-                left: 0,
-                zIndex: 1,
-                whiteSpace: "nowrap",
-                fontWeight: 500,
-                padding: "4px 8px",
-              }}
-            >
-              {worker.userName}
-            </td>
-            {schedule[wIdx]?.map((val, dIdx) => {
-              const wt = WORK_TYPES[val];
-              return (
-                <td
-                  key={dIdx}
-                  onClick={onCellClick ? () => onCellClick(wIdx, dIdx) : undefined}
-                  style={{
-                    ...cellStyle,
-                    minWidth: cellSize,
-                    height: cellSize - 2,
-                    background: wt.bg,
-                    color: wt.color,
-                    cursor: onCellClick ? "pointer" : "default",
-                    fontWeight: val !== 0 ? 700 : 400,
-                  }}
-                >
-                  {wt.short}
-                </td>
-              );
-            })}
-          </tr>
-        ))}
+        {initData.workers.map((worker, wIdx) => {
+          const row = schedule[wIdx] ?? [];
+          const holidayCount = row.filter((v) => v === 0 || v === 4).length;
+          return (
+            <tr key={worker.userId}>
+              <td
+                style={{
+                  ...cellStyle,
+                  minWidth: 72,
+                  background: "#fafafa",
+                  position: "sticky",
+                  left: 0,
+                  zIndex: 1,
+                  whiteSpace: "nowrap",
+                  fontWeight: 500,
+                  padding: "4px 8px",
+                }}
+              >
+                {worker.userName}
+              </td>
+              {row.map((val, dIdx) => {
+                const wt = WORK_TYPES[val];
+                return (
+                  <td
+                    key={dIdx}
+                    onClick={onCellClick ? () => onCellClick(wIdx, dIdx) : undefined}
+                    style={{
+                      ...cellStyle,
+                      minWidth: cellSize,
+                      height: cellSize - 2,
+                      background: wt.bg,
+                      color: wt.color,
+                      cursor: onCellClick ? "pointer" : "default",
+                      fontWeight: val !== 0 ? 700 : 400,
+                    }}
+                  >
+                    {wt.short}
+                  </td>
+                );
+              })}
+              <td
+                style={{
+                  ...cellStyle,
+                  minWidth: 40,
+                  background: "#fafafa",
+                  fontWeight: 600,
+                  color: "#52c41a",
+                }}
+              >
+                {holidayCount}
+              </td>
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   </div>

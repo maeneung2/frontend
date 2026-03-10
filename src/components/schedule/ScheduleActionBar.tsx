@@ -8,6 +8,7 @@ interface Props {
   onGenerate: () => void;
   onReset: () => void;
   onSave: () => void;
+  onMemberSetting: () => void;
 }
 
 const ScheduleActionBar = ({
@@ -17,8 +18,10 @@ const ScheduleActionBar = ({
   onGenerate,
   onReset,
   onSave,
+  onMemberSetting,
 }: Props) => (
   <Flex gap={2} justify={"flex-end"} mt={1}>
+    <Button onClick={onMemberSetting}>멤버 설정</Button>
     {isGenerated && (
       <Button onClick={onReset} danger>
         리셋

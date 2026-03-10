@@ -43,7 +43,6 @@ const GroupScheduleSection = ({ groupId }: Props) => {
           userProfile: w.userProfile ?? w.user?.userProfile,
           isNight: w.isNight,
           targetWorkCount: w.targetWorkCount,
-          admin: w.admin,
         })),
       }
     : null;

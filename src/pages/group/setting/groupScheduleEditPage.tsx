@@ -14,6 +14,9 @@ import ScheduleTable from "../../../components/schedule/ScheduleTable";
 import ScheduleActionBar from "../../../components/schedule/ScheduleActionBar";
 import ScheduleFullscreenOverlay from "../../../components/schedule/ScheduleFullscreenOverlay";
 import PageHeader from "../../../components/common/PageHeader";
+import ScheduleMemberSettingModal, {
+  type MemberConfig,
+} from "../../../components/schedule/ScheduleMemberSettingModal";
 
 const GroupScheduleEditPage = () => {
   const { group_id, schedule_id } = useParams();
@@ -29,6 +32,8 @@ const GroupScheduleEditPage = () => {
   const [date, setDate] = useState<Dayjs | null>(null);
   const [initData, setInitData] = useState<InitData | null>(null);
   const [isGenerated, setIsGenerated] = useState(false);
+  const [memberModalOpen, setMemberModalOpen] = useState(false);
+  const [memberConfigs, setMemberConfigs] = useState<MemberConfig[]>([]);
 
   // 편집 모드 전용
   const [isDirty, setIsDirty] = useState(false);
@@ -78,6 +83,17 @@ const GroupScheduleEditPage = () => {
     onSuccess: (data) => {
       setInitData(data);
       setSchedule(data.workers.map(() => Array(data.numDays).fill(0)));
+      setMemberConfigs(
+        data.workers.map((w) => ({
+          userId: w.userId,
+          userName: w.userName,
+          userProfile: w.userProfile,
+          isNight: w.isNight,
+          targetWorkCount: w.targetWorkCount,
+          excluded: false,
+        }))
+      );
+      setMemberModalOpen(true);
     },
     onError: (err: unknown) => {
       const status = (err as { response?: { status?: number } })?.response?.status;
@@ -88,45 +104,63 @@ const GroupScheduleEditPage = () => {
 
   const { mutate: generateSchedule, isPending: generateLoading } = useMutation({
     mutationFn: (baseSchedule: number[][]) => {
-      const members = initData!.workers.map((w, i) => ({ ...w, isNight: i >= 2 }));
+      const activeMembers = memberConfigs.filter((m) => !m.excluded);
       return api
         .post("/api/v1/schedule/preview", {
           groupId: group_id,
           date: date!.format("YYYY-MM-01"),
-          selectedDay: initData!.selectedDay,
-          selectedNight: initData!.selectedNight,
+          selectedDay: [],
+          selectedNight: [],
           schedule: baseSchedule,
-          members,
+          members: activeMembers,
         })
         .then((r) => r.data.data.schedule as number[][]);
     },
     onSuccess: (generated) => {
-      setSchedule(generated);
+      setSchedule((prev) => {
+        const next = [...prev];
+        let activeIdx = 0;
+        memberConfigs.forEach((m, i) => {
+          if (!m.excluded) {
+            next[i] = generated[activeIdx++] ?? prev[i];
+          }
+        });
+        return next;
+      });
       setIsGenerated(true);
     },
     onError: () => alert("시간표 생성에 실패했습니다."),
   });
 
   const { mutate: saveCreate, isPending: saveCreateLoading } = useMutation({
-    mutationFn: () =>
-      api.post("/api/v1/schedule", {
+    mutationFn: () => {
+      const activeMembers = memberConfigs
+        .filter((m) => !m.excluded)
+        .map((m, _, arr) => ({
+          userId: m.userId,
+          userName: m.userName,
+          userProfile: m.userProfile,
+          isNight: m.isNight,
+          targetWorkCount: m.targetWorkCount,
+          scheduleRow: schedule[memberConfigs.indexOf(m)],
+        }));
+      return api.post("/api/v1/schedule", {
         groupId: group_id,
         date: date!.format("YYYY-MM-01"),
         selectedDay: [],
         selectedNight: [],
-        schedule,
-      }),
-    onSuccess: () => alert("저장되었습니다."),
+        schedule: activeMembers.map((m) => m.scheduleRow),
+        members: activeMembers.map(({ scheduleRow: _, ...m }) => m),
+      });
+    },
+    onSuccess: () => navigate(`/group/${group_id}/setting/schedule`),
     onError: () => alert("저장에 실패했습니다."),
   });
 
   // 편집 모드 mutation
   const { mutate: saveEdit, isPending: saveEditLoading } = useMutation({
     mutationFn: () => api.patch(`/api/v1/schedule/${schedule_id}`, { schedule }),
-    onSuccess: () => {
-      setIsDirty(false);
-      navigate(-1);
-    },
+    onSuccess: () => navigate(`/group/${group_id}/setting/schedule`),
     onError: () => alert("저장에 실패했습니다."),
   });
 
@@ -150,11 +184,12 @@ const GroupScheduleEditPage = () => {
   };
 
   const handleCellClick = (workerIdx: number, dayIdx: number) => {
+    const originalIdx = isEditMode ? workerIdx : (activeIndices[workerIdx] ?? workerIdx);
     setSchedule((prev) => {
       const next = prev.map((row) => [...row]);
-      next[workerIdx][dayIdx] = selectedType;
-      if (selectedType === 2 && dayIdx + 1 < next[workerIdx].length) {
-        next[workerIdx][dayIdx + 1] = 3;
+      next[originalIdx][dayIdx] = selectedType;
+      if (selectedType === 2 && dayIdx + 1 < next[originalIdx].length) {
+        next[originalIdx][dayIdx + 1] = 3;
       }
       return next;
     });
@@ -173,7 +208,10 @@ const GroupScheduleEditPage = () => {
       baseSchedule = schedule;
       localStorage.setItem(key, JSON.stringify(schedule));
     }
-    generateSchedule(baseSchedule);
+    const activeBaseSchedule = memberConfigs
+      .map((m, i) => (!m.excluded ? baseSchedule[i] : null))
+      .filter((row): row is number[] => row !== null);
+    generateSchedule(activeBaseSchedule);
   };
 
   const handleReset = () => {
@@ -195,7 +233,30 @@ const GroupScheduleEditPage = () => {
     );
   }
 
-  const activeInitData = isEditMode ? editInitData : initData;
+  // 생성 모드: 제외 멤버 필터링
+  const activeIndices = memberConfigs
+    .map((m, i) => (!m.excluded ? i : -1))
+    .filter((i) => i !== -1);
+
+  const createInitData: InitData | null = initData
+    ? {
+        ...initData,
+        workers: memberConfigs
+          .filter((m) => !m.excluded)
+          .map((m) => ({
+            userId: m.userId,
+            userName: m.userName,
+            userProfile: m.userProfile,
+            isNight: m.isNight,
+            targetWorkCount: m.targetWorkCount,
+          })),
+      }
+    : null;
+
+  const createSchedule = activeIndices.map((i) => schedule[i] ?? []);
+
+  const activeInitData = isEditMode ? editInitData : createInitData;
+  const activeSchedule = isEditMode ? schedule : createSchedule;
   const saveLoading = isEditMode ? saveEditLoading : saveCreateLoading;
   const title = isEditMode
     ? `${dayjs(detail?.date).format("YYYY년 MM월")} 스케줄 편집`
@@ -224,12 +285,11 @@ const GroupScheduleEditPage = () => {
                 icon={<FullscreenOutlined />}
                 onClick={() => setFullscreen(true)}
                 size="middle"
-                style={{ flexShrink: 0 }}
               />
             </Flex>
             <ScheduleTable
               initData={activeInitData}
-              schedule={schedule}
+              schedule={activeSchedule}
               onCellClick={handleCellClick}
             />
             {isEditMode ? (
@@ -246,11 +306,19 @@ const GroupScheduleEditPage = () => {
                 onGenerate={handleGenerate}
                 onReset={handleReset}
                 onSave={() => saveCreate()}
+                onMemberSetting={() => setMemberModalOpen(true)}
               />
             )}
           </Flex>
         )}
       </Flex>
+
+      <ScheduleMemberSettingModal
+        open={memberModalOpen}
+        members={memberConfigs}
+        onChange={setMemberConfigs}
+        onConfirm={() => setMemberModalOpen(false)}
+      />
 
       {fullscreen && activeInitData && (
         <ScheduleFullscreenOverlay onClose={() => setFullscreen(false)}>
@@ -259,7 +327,7 @@ const GroupScheduleEditPage = () => {
           </Flex>
           <ScheduleTable
             initData={activeInitData}
-            schedule={schedule}
+            schedule={activeSchedule}
             onCellClick={handleCellClick}
             cellSize={44}
           />
