@@ -1,18 +1,19 @@
 import { Flex } from "@chakra-ui/react";
 import { Typography } from "antd";
-import { WORK_TYPES, type WorkType } from "../../types/schedule.ts";
+import { WORK_TYPES, type WorkType, type ShiftMode } from "../../types/schedule.ts";
 
 const { Text } = Typography;
 
 interface Props {
   selectedType: WorkType;
   onSelect: (type: WorkType) => void;
+  shiftMode: ShiftMode;
 }
 
-const WorkTypeSelector = ({ selectedType, onSelect }: Props) => (
+const WorkTypeSelector = ({ selectedType, onSelect, shiftMode }: Props) => (
   <Flex gap={2} align={"center"} wrap={"wrap"}>
     <Text strong>근무형태:</Text>
-    {WORK_TYPES.map((wt) => {
+    {WORK_TYPES.filter((wt) => wt.shiftMode === "공통" || wt.shiftMode === shiftMode).map((wt) => {
       const isSelected = selectedType === wt.value;
       return (
         <div

@@ -6,14 +6,14 @@ import { useNavigate, useParams } from "react-router-dom";
 import dayjs, { Dayjs } from "dayjs";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "../../../api/axios";
-import type { InitData, WorkType, ScheduleDetail, MemberConfig } from "../../../types/schedule.ts";
+import type { InitData, WorkType, ScheduleDetail, MemberConfig, ShiftMode } from "../../../types/schedule.ts";
 import ScheduleHeader from "../../../components/schedule/ScheduleHeader";
 import WorkTypeSelector from "../../../components/schedule/WorkTypeSelector";
 import ScheduleTable from "../../../components/schedule/ScheduleTable";
 import ScheduleActionBar from "../../../components/schedule/ScheduleActionBar";
 import ScheduleFullscreenOverlay from "../../../components/schedule/ScheduleFullscreenOverlay";
 import PageHeader from "../../../components/common/PageHeader";
-import ScheduleMemberSettingModal from "../../../components/schedule/ScheduleMemberSettingModal";
+import ScheduleSettingModal from "../../../components/schedule/ScheduleSettingModal";
 
 const GroupScheduleEditPage = () => {
   const { group_id, schedule_id } = useParams();
@@ -31,6 +31,8 @@ const GroupScheduleEditPage = () => {
   const [isGenerated, setIsGenerated] = useState(false);
   const [memberModalOpen, setMemberModalOpen] = useState(false);
   const [memberConfigs, setMemberConfigs] = useState<MemberConfig[]>([]);
+  const [shiftMode, setShiftMode] = useState<ShiftMode>("2교대");
+  const [rotationPattern, setRotationPattern] = useState<WorkType[]>([]);
 
   // 편집 모드 전용
   const [isDirty, setIsDirty] = useState(false);
@@ -44,7 +46,6 @@ const GroupScheduleEditPage = () => {
 
   useEffect(() => {
     if (detail) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSchedule(detail.workers.map((w) => [...w.plan]));
     }
   }, [detail?.scheduleId]);
@@ -78,6 +79,8 @@ const GroupScheduleEditPage = () => {
       setMemberConfigs(
         raw.workers.map((w) => ({
           excluded: false,
+          rotationStart: 0,
+          fixedShift: "none" as const,
           ...w,
         }))
       );
@@ -164,6 +167,17 @@ const GroupScheduleEditPage = () => {
     const originalIdx = isEditMode ? workerIdx : (activeIndices[workerIdx] ?? workerIdx);
     setSchedule((prev) => {
       const next = prev.map((row) => [...row]);
+      if (next[originalIdx][dayIdx] === selectedType) {
+        next[originalIdx][dayIdx] = 0;
+        if (
+          selectedType === 2 &&
+          dayIdx + 1 < next[originalIdx].length &&
+          next[originalIdx][dayIdx + 1] === 3
+        ) {
+          next[originalIdx][dayIdx + 1] = 0;
+        }
+        return next;
+      }
       next[originalIdx][dayIdx] = selectedType;
       if (selectedType === 2 && dayIdx + 1 < next[originalIdx].length) {
         next[originalIdx][dayIdx + 1] = 3;
@@ -175,16 +189,29 @@ const GroupScheduleEditPage = () => {
 
   const handleGenerate = () => {
     if (!initData || !date) return;
+
+    // 순환 패턴이 있으면 프론트에서 직접 생성
+    if (rotationPattern.length > 0) {
+      const generated = memberConfigs
+        .filter((m) => !m.excluded)
+        .map((m) =>
+          Array.from({ length: initData.numDays }, (_, i) =>
+            rotationPattern[(m.rotationStart + i) % rotationPattern.length]
+          )
+        );
+      setSchedule(generated);
+      setIsGenerated(true);
+      return;
+    }
+
+    // 랜덤 배치: 백엔드 preview 호출
     const key = getDraftKey();
     const saved = localStorage.getItem(key);
-    let baseSchedule: number[][];
     if (saved) {
-      baseSchedule = JSON.parse(saved);
-      setSchedule(baseSchedule);
+      setSchedule(JSON.parse(saved));
     } else {
       localStorage.setItem(key, JSON.stringify(schedule));
     }
-
     generateSchedule();
   };
 
@@ -244,7 +271,7 @@ const GroupScheduleEditPage = () => {
         {activeInitData && (
           <Flex flexDir={"column"} gap={3}>
             <Flex justify={"space-between"} align={"center"}>
-              <WorkTypeSelector selectedType={selectedType} onSelect={setSelectedType} />
+              <WorkTypeSelector selectedType={selectedType} onSelect={setSelectedType} shiftMode={isEditMode ? "2교대" : shiftMode} />
               <Button
                 icon={<FullscreenOutlined />}
                 onClick={() => setFullscreen(true)}
@@ -277,9 +304,13 @@ const GroupScheduleEditPage = () => {
         )}
       </Flex>
 
-      <ScheduleMemberSettingModal
+      <ScheduleSettingModal
         open={memberModalOpen}
         members={memberConfigs}
+        shiftMode={shiftMode}
+        rotationPattern={rotationPattern}
+        onShiftModeChange={setShiftMode}
+        onRotationPatternChange={setRotationPattern}
         onChange={setMemberConfigs}
         onConfirm={() => setMemberModalOpen(false)}
       />
@@ -287,7 +318,7 @@ const GroupScheduleEditPage = () => {
       {fullscreen && activeInitData && (
         <ScheduleFullscreenOverlay onClose={() => setFullscreen(false)}>
           <Flex justify={"space-between"} align={"center"} flexShrink={0}>
-            <WorkTypeSelector selectedType={selectedType} onSelect={setSelectedType} />
+            <WorkTypeSelector selectedType={selectedType} onSelect={setSelectedType} shiftMode={isEditMode ? "2교대" : shiftMode} />
           </Flex>
           <ScheduleTable
             initData={activeInitData}
