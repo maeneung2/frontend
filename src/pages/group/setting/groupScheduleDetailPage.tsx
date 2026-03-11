@@ -7,7 +7,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../../api/axios";
-import type { InitData, ScheduleDetail } from "../../../components/schedule/scheduleTypes";
+import type { InitData, ScheduleDetail } from "../../../types/schedule.ts";
 import ScheduleTable from "../../../components/schedule/ScheduleTable";
 import ScheduleFullscreenOverlay from "../../../components/schedule/ScheduleFullscreenOverlay";
 import PageHeader from "../../../components/common/PageHeader";

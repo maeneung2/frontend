@@ -35,7 +35,7 @@ pnpm preview    # 빌드 결과 미리보기
 
 ### 컴포넌트 구조
 - `src/components/schedule/` — 스케줄 관련 공용 컴포넌트
-  - `scheduleTypes.ts` — 공유 타입, 상수 (WORK_TYPES, WEEKDAYS, cellStyle)
+  - `schedule.ts` — 공유 타입, 상수 (WORK_TYPES, WEEKDAYS, cellStyle)
   - `ScheduleTable.tsx` — 인원×날짜 그리드. `onCellClick` 없으면 읽기 전용
   - `WorkTypeSelector.tsx`, `ScheduleHeader.tsx`, `ScheduleActionBar.tsx`
   - `MyScheduleCalendar.tsx` — 개인 스케줄 월 달력

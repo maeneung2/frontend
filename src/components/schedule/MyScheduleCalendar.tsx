@@ -1,6 +1,6 @@
 import { Typography } from "antd";
 import dayjs, { Dayjs } from "dayjs";
-import { WORK_TYPES, WEEKDAYS } from "./scheduleTypes";
+import { WORK_TYPES, WEEKDAYS } from "../../types/schedule.ts";
 
 const { Text } = Typography;
 

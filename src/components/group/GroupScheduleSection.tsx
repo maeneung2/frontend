@@ -5,7 +5,7 @@ import { FullscreenOutlined, LeftOutlined, RightOutlined } from "@ant-design/ico
 import dayjs, { Dayjs } from "dayjs";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../api/axios";
-import type { InitData, ScheduleDetail } from "../schedule/scheduleTypes";
+import type { InitData, ScheduleDetail } from "../../types/schedule.ts";
 import ScheduleTable from "../schedule/ScheduleTable";
 import ScheduleFullscreenOverlay from "../schedule/ScheduleFullscreenOverlay";
 

@@ -2,13 +2,11 @@ import { Button, Flex, Popconfirm, Table } from "antd";
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
-import type { ScheduleItem } from "../../types/schedule";
-
-export type { ScheduleItem };
+import type { ScheduleDetail } from "../../types/schedule";
 
 interface Props {
   groupId: string;
-  schedules: ScheduleItem[];
+  schedules: ScheduleDetail[];
   loading: boolean;
   deletingId: string | null;
   onDelete: (id: string) => void;
@@ -34,14 +32,12 @@ const ScheduleList = ({ groupId, schedules, loading, deletingId, onDelete }: Pro
       title: "",
       key: "action",
       width: 100,
-      render: (_: unknown, record: ScheduleItem) => (
+      render: (_: unknown, record: ScheduleDetail) => (
         <Flex gap={1} onClick={(e) => e.stopPropagation()}>
           <Button
             size="small"
             icon={<EditOutlined />}
-            onClick={() =>
-              navigate(`/group/${groupId}/setting/schedule/${record.scheduleId}/edit`)
-            }
+            onClick={() => navigate(`/group/${groupId}/setting/schedule/${record.scheduleId}/edit`)}
           />
           <Popconfirm
             title="스케줄을 삭제하시겠습니까?"

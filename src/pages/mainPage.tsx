@@ -17,7 +17,7 @@ import type { MainData } from "../types/main";
 import type { NoteDateItem } from "../types/note";
 import CreateGroupModal from "../components/group/CreateGroupModal";
 import MyScheduleCalendar from "../components/schedule/MyScheduleCalendar";
-import { WORK_TYPES } from "../components/schedule/scheduleTypes";
+import { WORK_TYPES } from "../types/schedule.ts";
 
 const { Title, Text: AntText } = Typography;
 

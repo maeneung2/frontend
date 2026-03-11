@@ -1,4 +1,4 @@
-import { type InitData, WORK_TYPES, WEEKDAYS, cellStyle } from "./scheduleTypes";
+import { type InitData, WORK_TYPES, WEEKDAYS, cellStyle } from "../../types/schedule.ts";
 
 interface Props {
   initData: InitData;

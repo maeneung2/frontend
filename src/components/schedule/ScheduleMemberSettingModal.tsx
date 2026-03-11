@@ -1,7 +1,7 @@
 import { Avatar, InputNumber, Modal, Switch, Typography } from "antd";
 import { CheckSquareFilled, BorderOutlined, UserOutlined } from "@ant-design/icons";
 import { Flex } from "@chakra-ui/react";
-import type { MemberConfig } from "./scheduleTypes.ts";
+import type { MemberConfig } from "../../types/schedule.ts";
 
 const { Text } = Typography;
 

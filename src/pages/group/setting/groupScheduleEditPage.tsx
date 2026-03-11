@@ -6,12 +6,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import dayjs, { Dayjs } from "dayjs";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "../../../api/axios";
-import type {
-  InitData,
-  WorkType,
-  ScheduleDetail,
-  MemberConfig,
-} from "../../../components/schedule/scheduleTypes";
+import type { InitData, WorkType, ScheduleDetail, MemberConfig } from "../../../types/schedule.ts";
 import ScheduleHeader from "../../../components/schedule/ScheduleHeader";
 import WorkTypeSelector from "../../../components/schedule/WorkTypeSelector";
 import ScheduleTable from "../../../components/schedule/ScheduleTable";

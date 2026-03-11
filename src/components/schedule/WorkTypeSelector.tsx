@@ -1,6 +1,6 @@
 import { Flex } from "@chakra-ui/react";
 import { Typography } from "antd";
-import { WORK_TYPES, type WorkType } from "./scheduleTypes";
+import { WORK_TYPES, type WorkType } from "../../types/schedule.ts";
 
 const { Text } = Typography;
 
