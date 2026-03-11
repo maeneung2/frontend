@@ -5,8 +5,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../../api/axios";
 import { useAuthStore } from "../../../store/authStore";
-import ScheduleList, { type ScheduleItem } from "../../../components/schedule/ScheduleList";
+import ScheduleList from "../../../components/schedule/ScheduleList";
 import PageHeader from "../../../components/common/PageHeader";
+import type { ScheduleDetail } from "../../../types/schedule.ts";
 
 const GroupScheduleSettingPage = () => {
   const { group_id } = useParams();
@@ -16,16 +17,19 @@ const GroupScheduleSettingPage = () => {
 
   const queryKey = ["schedules", group_id];
 
-  const { data: schedules = [], isLoading: loading } = useQuery<ScheduleItem[]>({
+  const { data: schedules = [], isLoading: loading } = useQuery<ScheduleDetail[]>({
     queryKey,
     queryFn: () =>
       api.get("/api/v1/schedule", { params: { groupId: group_id } }).then((r) => r.data.data),
     enabled: !!group_id,
   });
 
-  const { mutate: deleteSchedule, variables: deletingVar, isPending: isDeleting } = useMutation({
-    mutationFn: (id: string) =>
-      api.delete(`/api/v1/schedule/${id}`).then((r) => r.data.data),
+  const {
+    mutate: deleteSchedule,
+    variables: deletingVar,
+    isPending: isDeleting,
+  } = useMutation({
+    mutationFn: (id: string) => api.delete(`/api/v1/schedule/${id}`).then((r) => r.data.data),
     onSuccess: (data) => {
       if (data?.user) updateUser(data.user);
       queryClient.invalidateQueries({ queryKey });
@@ -56,6 +60,10 @@ const GroupScheduleSettingPage = () => {
         loading={loading}
         deletingId={deletingId}
         onDelete={deleteSchedule}
+        onCreateNext={(scheduleId) => {
+          // TODO: 백엔드 연동 후 구현
+          console.log("다음달 생성:", scheduleId);
+        }}
       />
     </Flex>
   );

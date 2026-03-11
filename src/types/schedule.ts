@@ -2,7 +2,7 @@ import type { User } from "./user.ts";
 
 export interface Worker {
   workerId: string;
-  isNight: boolean;
+  fixedWorkType: 0 | 1 | 2;
   isNew: boolean;
   restCount: number;
   plan: number[];
@@ -19,7 +19,11 @@ export interface ScheduleDetail {
 }
 
 export type FixedShift = "none" | "day" | "night";
-export type MemberConfig = Worker & { excluded: boolean; rotationStart: number; fixedShift: FixedShift };
+export type MemberConfig = Worker & {
+  excluded: boolean;
+  rotationStart: number;
+  fixedShift: FixedShift;
+};
 
 export interface InitData {
   numDays: number;

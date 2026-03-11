@@ -1,5 +1,5 @@
 import { Button, Flex, Popconfirm, Table } from "antd";
-import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { DeleteOutlined, EditOutlined, DoubleRightOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import type { ScheduleDetail } from "../../types/schedule";
@@ -10,9 +10,10 @@ interface Props {
   loading: boolean;
   deletingId: string | null;
   onDelete: (id: string) => void;
+  onCreateNext: (scheduleId: string) => void;
 }
 
-const ScheduleList = ({ groupId, schedules, loading, deletingId, onDelete }: Props) => {
+const ScheduleList = ({ groupId, schedules, loading, deletingId, onDelete, onCreateNext }: Props) => {
   const navigate = useNavigate();
 
   const columns = [
@@ -34,6 +35,11 @@ const ScheduleList = ({ groupId, schedules, loading, deletingId, onDelete }: Pro
       width: 100,
       render: (_: unknown, record: ScheduleDetail) => (
         <Flex gap={1} onClick={(e) => e.stopPropagation()}>
+          <Button
+            size="small"
+            icon={<DoubleRightOutlined />}
+            onClick={() => onCreateNext(record.scheduleId)}
+          />
           <Button
             size="small"
             icon={<EditOutlined />}

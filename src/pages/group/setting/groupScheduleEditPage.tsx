@@ -6,7 +6,13 @@ import { useNavigate, useParams } from "react-router-dom";
 import dayjs, { Dayjs } from "dayjs";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "../../../api/axios";
-import type { InitData, WorkType, ScheduleDetail, MemberConfig, ShiftMode } from "../../../types/schedule.ts";
+import type {
+  InitData,
+  WorkType,
+  ScheduleDetail,
+  MemberConfig,
+  ShiftMode,
+} from "../../../types/schedule.ts";
 import ScheduleHeader from "../../../components/schedule/ScheduleHeader";
 import WorkTypeSelector from "../../../components/schedule/WorkTypeSelector";
 import ScheduleTable from "../../../components/schedule/ScheduleTable";
@@ -94,20 +100,20 @@ const GroupScheduleEditPage = () => {
   });
 
   const { mutate: generateSchedule, isPending: generateLoading } = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
+      const fixedShiftMap = { none: 0, day: 1, night: 2 } as const;
       const activeRawWorkers = memberConfigs
         .filter((w) => !w.excluded)
-        .map((w, idx) => ({ ...w, plan: schedule[idx] }));
+        .map((w, idx) => ({ ...w, plan: schedule[idx], fixedWorkType: fixedShiftMap[w.fixedShift] }));
 
-      return api
-        .post("/api/v1/schedule/preview", {
-          groupId: group_id,
-          date: date!.format("YYYY-MM-01"),
-          selectedDay: [],
-          selectedNight: [],
-          workers: activeRawWorkers,
-        })
-        .then((r) => r.data.data);
+      const r = await api.post("/api/v1/schedule/preview", {
+        groupId: group_id,
+        date: date!.format("YYYY-MM-01"),
+        selectedDay: [],
+        selectedNight: [],
+        workers: activeRawWorkers,
+      });
+      return r.data.data;
     },
     onSuccess: (data: ScheduleDetail) => {
       setSchedule(data.workers.map((w) => [...w.plan]));
@@ -195,8 +201,9 @@ const GroupScheduleEditPage = () => {
       const generated = memberConfigs
         .filter((m) => !m.excluded)
         .map((m) =>
-          Array.from({ length: initData.numDays }, (_, i) =>
-            rotationPattern[(m.rotationStart + i) % rotationPattern.length]
+          Array.from(
+            { length: initData.numDays },
+            (_, i) => rotationPattern[(m.rotationStart + i) % rotationPattern.length]
           )
         );
       setSchedule(generated);
@@ -271,7 +278,11 @@ const GroupScheduleEditPage = () => {
         {activeInitData && (
           <Flex flexDir={"column"} gap={3}>
             <Flex justify={"space-between"} align={"center"}>
-              <WorkTypeSelector selectedType={selectedType} onSelect={setSelectedType} shiftMode={isEditMode ? "2교대" : shiftMode} />
+              <WorkTypeSelector
+                selectedType={selectedType}
+                onSelect={setSelectedType}
+                shiftMode={isEditMode ? "2교대" : shiftMode}
+              />
               <Button
                 icon={<FullscreenOutlined />}
                 onClick={() => setFullscreen(true)}
@@ -318,7 +329,11 @@ const GroupScheduleEditPage = () => {
       {fullscreen && activeInitData && (
         <ScheduleFullscreenOverlay onClose={() => setFullscreen(false)}>
           <Flex justify={"space-between"} align={"center"} flexShrink={0}>
-            <WorkTypeSelector selectedType={selectedType} onSelect={setSelectedType} shiftMode={isEditMode ? "2교대" : shiftMode} />
+            <WorkTypeSelector
+              selectedType={selectedType}
+              onSelect={setSelectedType}
+              shiftMode={isEditMode ? "2교대" : shiftMode}
+            />
           </Flex>
           <ScheduleTable
             initData={activeInitData}
