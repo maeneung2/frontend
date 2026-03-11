@@ -54,6 +54,7 @@ const GroupScheduleEditPage = () => {
     if (detail) {
       setSchedule(detail.workers.map((w) => [...w.plan]));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [detail?.scheduleId]);
 
   // 편집 모드: initData 빌드
