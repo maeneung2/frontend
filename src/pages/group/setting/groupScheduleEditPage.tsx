@@ -304,6 +304,7 @@ const GroupScheduleEditPage = () => {
             ) : (
               <ScheduleActionBar
                 isGenerated={isGenerated}
+                isRotation={rotationPattern.length > 0}
                 generateLoading={generateLoading}
                 saveLoading={saveLoading}
                 onGenerate={handleGenerate}
@@ -324,7 +325,10 @@ const GroupScheduleEditPage = () => {
         onShiftModeChange={setShiftMode}
         onRotationPatternChange={setRotationPattern}
         onChange={setMemberConfigs}
-        onConfirm={() => setMemberModalOpen(false)}
+        onConfirm={() => {
+          setMemberModalOpen(false);
+          if (rotationPattern.length > 0) handleGenerate();
+        }}
       />
 
       {fullscreen && activeInitData && (

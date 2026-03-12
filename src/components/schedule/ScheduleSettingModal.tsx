@@ -132,72 +132,78 @@ const ScheduleSettingModal = ({
           {members.map((m) => (
             <Flex
               key={m.userId}
-              align={"center"}
-              gap={3}
+              flexDir={"column"}
+              gap={1}
               style={{
                 opacity: m.excluded ? 0.35 : 1,
                 filter: m.excluded ? "grayscale(1)" : "none",
                 transition: "opacity 0.2s, filter 0.2s",
               }}
             >
-              {m.excluded ? (
-                <BorderOutlined
-                  style={{ fontSize: 18, color: "#bfbfbf", cursor: "pointer", flexShrink: 0 }}
-                  onClick={() => update(m.userId, { excluded: false })}
+              {/* 윗줄: 유저 정보 */}
+              <Flex align={"center"} gap={2}>
+                {m.excluded ? (
+                  <BorderOutlined
+                    style={{ fontSize: 18, color: "#bfbfbf", cursor: "pointer", flexShrink: 0 }}
+                    onClick={() => update(m.userId, { excluded: false })}
+                  />
+                ) : (
+                  <CheckSquareFilled
+                    style={{ fontSize: 18, color: "#1677ff", cursor: "pointer", flexShrink: 0 }}
+                    onClick={() => update(m.userId, { excluded: true })}
+                  />
+                )}
+                <Avatar
+                  src={m.user.userProfile ?? undefined}
+                  icon={!m.user.userProfile ? <UserOutlined /> : undefined}
+                  size={28}
+                  style={{ flexShrink: 0 }}
                 />
-              ) : (
-                <CheckSquareFilled
-                  style={{ fontSize: 18, color: "#1677ff", cursor: "pointer", flexShrink: 0 }}
-                  onClick={() => update(m.userId, { excluded: true })}
-                />
-              )}
+                <Text>{m.user.userName}</Text>
+              </Flex>
 
-              <Avatar
-                src={m.user.userProfile ?? undefined}
-                icon={!m.user.userProfile ? <UserOutlined /> : undefined}
-                size={32}
-                style={{ flexShrink: 0 }}
-              />
-              <Text style={{ flex: 1 }}>{m.user.userName}</Text>
-
-              {hasPattern ? (
-                <Select
-                  size="small"
-                  value={m.rotationStart}
-                  disabled={m.excluded}
-                  onChange={(v) => update(m.userId, { rotationStart: v })}
-                  style={{ width: 90 }}
-                  options={rotationPattern.map((v, idx) => {
-                    const wt = WORK_TYPES.find((w) => w.value === v)!;
-                    return { value: idx, label: `${idx + 1}. ${wt.label}` };
-                  })}
-                />
-              ) : shiftMode === "2교대" ? (
-                <Select
-                  size="small"
-                  value={m.fixedShift}
-                  disabled={m.excluded}
-                  onChange={(v: FixedShift) => update(m.userId, { fixedShift: v })}
-                  style={{ width: 90 }}
-                  options={[
-                    { value: "none", label: "고정없음" },
-                    { value: "day", label: "주간고정" },
-                    { value: "night", label: "야간고정" },
-                  ]}
-                />
-              ) : null}
-
-              {!hasPattern && shiftMode === "2교대" && (
-                <InputNumber
-                  size="small"
-                  min={0}
-                  max={31}
-                  value={m.restCount}
-                  disabled={m.excluded}
-                  onChange={(v) => update(m.userId, { restCount: v ?? 0 })}
-                  style={{ width: 58 }}
-                  suffix="휴"
-                />
+              {/* 아랫줄: 설정 */}
+              {(hasPattern || shiftMode === "2교대") && (
+                <Flex align={"center"} gap={2} style={{ paddingLeft: 26 }}>
+                  {hasPattern ? (
+                    <Select
+                      size="small"
+                      value={m.rotationStart}
+                      disabled={m.excluded}
+                      onChange={(v) => update(m.userId, { rotationStart: v })}
+                      style={{ flex: 1 }}
+                      options={rotationPattern.map((v, idx) => {
+                        const wt = WORK_TYPES.find((w) => w.value === v)!;
+                        return { value: idx, label: `${idx + 1}. ${wt.label}` };
+                      })}
+                    />
+                  ) : (
+                    <>
+                      <Select
+                        size="small"
+                        value={m.fixedShift}
+                        disabled={m.excluded}
+                        onChange={(v: FixedShift) => update(m.userId, { fixedShift: v })}
+                        style={{ flex: 1 }}
+                        options={[
+                          { value: "none", label: "고정없음" },
+                          { value: "day", label: "주간고정" },
+                          { value: "night", label: "야간고정" },
+                        ]}
+                      />
+                      <InputNumber
+                        size="small"
+                        min={0}
+                        max={31}
+                        value={m.restCount}
+                        disabled={m.excluded}
+                        onChange={(v) => update(m.userId, { restCount: v ?? 0 })}
+                        style={{ width: 72 }}
+                        suffix="휴"
+                      />
+                    </>
+                  )}
+                </Flex>
               )}
             </Flex>
           ))}
