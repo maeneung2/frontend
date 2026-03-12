@@ -1,10 +1,14 @@
 import type { User } from "./user.ts";
 
+export type WorkType = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+
 export interface Worker {
   workerId: string;
   fixedWorkType: 0 | 1 | 2;
   isNew: boolean;
   restCount: number;
+  prevWorkCount?: number;
+  lastWorkType?: WorkType;
   plan: number[];
   user: User;
   userId: string;
@@ -15,6 +19,7 @@ export interface ScheduleDetail {
   groupId?: string;
   date: string;
   createdAt: string;
+  pattern: WorkType[];
   workers: Worker[];
 }
 
@@ -35,8 +40,6 @@ export interface InitData {
 }
 
 export type ShiftMode = "2교대" | "3교대";
-
-export type WorkType = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 export const WORK_TYPES: {
   value: WorkType;

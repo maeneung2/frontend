@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Flex } from "@chakra-ui/react";
 import { Button, Modal, Spin } from "antd";
 import { FullscreenOutlined } from "@ant-design/icons";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import dayjs, { Dayjs } from "dayjs";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "../../../api/axios";
@@ -12,7 +12,40 @@ import type {
   ScheduleDetail,
   MemberConfig,
   ShiftMode,
+  FixedShift,
 } from "../../../types/schedule.ts";
+
+const FIXED_SHIFT_MAP = { none: 0, day: 1, night: 2 } as const;
+const FIXED_SHIFT_REVERSE: FixedShift[] = ["none", "day", "night"];
+
+const REST_TYPES = new Set([0, 4, 5]);
+
+function calcPrevMonthData(plan: number[]): { prevWorkCount: number; lastWorkType: WorkType } {
+  const lastRestIdx = Math.max(plan.lastIndexOf(0), plan.lastIndexOf(4), plan.lastIndexOf(5));
+  const prevWorkCount = lastRestIdx >= 0 ? plan.length - 1 - lastRestIdx : plan.length;
+  let lastWorkType: WorkType = 0;
+  for (let i = plan.length - 1; i >= 0; i--) {
+    if (!REST_TYPES.has(plan[i])) { lastWorkType = plan[i] as WorkType; break; }
+  }
+  return { prevWorkCount, lastWorkType };
+}
+
+function inferRotationStart(plan: WorkType[], pattern: WorkType[]): number {
+  const P = pattern.length;
+  let bestStart = 0;
+  let bestMatches = -1;
+  for (let start = 0; start < P; start++) {
+    let matches = 0;
+    for (let i = 0; i < plan.length; i++) {
+      if (plan[i] === pattern[(start + i) % P]) matches++;
+    }
+    if (matches > bestMatches) {
+      bestMatches = matches;
+      bestStart = start;
+    }
+  }
+  return bestStart;
+}
 import ScheduleHeader from "../../../components/schedule/ScheduleHeader";
 import WorkTypeSelector from "../../../components/schedule/WorkTypeSelector";
 import ScheduleTable from "../../../components/schedule/ScheduleTable";
@@ -24,6 +57,7 @@ import ScheduleSettingModal from "../../../components/schedule/ScheduleSettingMo
 const GroupScheduleEditPage = () => {
   const { group_id, schedule_id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const isEditMode = !!schedule_id;
 
   // 공통 상태
@@ -32,7 +66,10 @@ const GroupScheduleEditPage = () => {
   const [fullscreen, setFullscreen] = useState(false);
 
   // 생성 모드 전용
-  const [date, setDate] = useState<Dayjs | null>(null);
+  const initDateFromState = (location.state as { date?: string } | null)?.date;
+  const [date, setDate] = useState<Dayjs | null>(
+    initDateFromState ? dayjs(initDateFromState) : null
+  );
   const [initData, setInitData] = useState<InitData | null>(null);
   const [isGenerated, setIsGenerated] = useState(false);
   const [memberModalOpen, setMemberModalOpen] = useState(false);
@@ -48,6 +85,23 @@ const GroupScheduleEditPage = () => {
     queryKey: ["schedule-detail", schedule_id],
     queryFn: () => api.get(`/api/v1/schedule/${schedule_id}`).then((r) => r.data.data),
     enabled: isEditMode,
+  });
+
+  // 생성 모드: 이전 달 순환패턴 조회
+  const prevDate = date ? date.subtract(1, "month") : null;
+  const { data: scheduleList } = useQuery<Array<{ scheduleId: string; date: string }>>({
+    queryKey: ["schedule-list", group_id],
+    queryFn: () =>
+      api.get("/api/v1/schedule", { params: { groupId: group_id } }).then((r) => r.data.data),
+    enabled: !isEditMode && !!group_id,
+  });
+  const prevMonthScheduleId = scheduleList?.find((s) =>
+    s.date.startsWith(prevDate?.format("YYYY-MM") ?? "___")
+  )?.scheduleId;
+  const { data: prevSchedule } = useQuery<ScheduleDetail>({
+    queryKey: ["schedule-detail", prevMonthScheduleId],
+    queryFn: () => api.get(`/api/v1/schedule/${prevMonthScheduleId}`).then((r) => r.data.data),
+    enabled: !!prevMonthScheduleId,
   });
 
   useEffect(() => {
@@ -83,14 +137,41 @@ const GroupScheduleEditPage = () => {
       const data: InitData = { ...raw };
       setInitData(data);
       setSchedule(data.workers.map((w) => w.plan));
-      setMemberConfigs(
-        raw.workers.map((w) => ({
-          excluded: false,
-          rotationStart: 0,
-          fixedShift: "none" as const,
-          ...w,
-        }))
-      );
+
+      const pattern = prevSchedule?.pattern;
+      if (pattern && pattern.length > 0) {
+        setRotationPattern(pattern);
+        setMemberConfigs(
+          raw.workers.map((w) => {
+            const prevWorker = prevSchedule!.workers.find((pw) => pw.userId === w.userId);
+            if (!prevWorker) {
+              return { excluded: true, rotationStart: 0, fixedShift: "none" as const, ...w };
+            }
+            const inferredStart = inferRotationStart(prevWorker.plan as WorkType[], pattern);
+            const rotationStart = (inferredStart + prevWorker.plan.length) % pattern.length;
+            const fixedShift = FIXED_SHIFT_REVERSE[prevWorker.fixedWorkType] ?? "none";
+            const { prevWorkCount, lastWorkType } = calcPrevMonthData(prevWorker.plan);
+            return { excluded: false, rotationStart, fixedShift, ...w, prevWorkCount, lastWorkType };
+          })
+        );
+      } else {
+        setMemberConfigs(
+          raw.workers.map((w) => {
+            const prevWorker = prevSchedule?.workers.find((pw) => pw.userId === w.userId);
+            const { prevWorkCount, lastWorkType } = prevWorker
+              ? calcPrevMonthData(prevWorker.plan)
+              : { prevWorkCount: 0, lastWorkType: 0 as WorkType };
+            return {
+              excluded: prevSchedule ? !prevWorker : false,
+              rotationStart: 0,
+              fixedShift: FIXED_SHIFT_REVERSE[prevWorker?.fixedWorkType ?? 0] ?? "none",
+              ...w,
+              prevWorkCount,
+              lastWorkType,
+            };
+          })
+        );
+      }
       setMemberModalOpen(true);
     },
     onError: (err: unknown) => {
@@ -100,12 +181,23 @@ const GroupScheduleEditPage = () => {
     },
   });
 
+  // 다음달 버튼으로 진입 시 자동 init
+  useEffect(() => {
+    if (initDateFromState && !isEditMode) {
+      initSchedule();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initSchedule]);
+
   const { mutate: generateSchedule, isPending: generateLoading } = useMutation({
     mutationFn: async () => {
-      const fixedShiftMap = { none: 0, day: 1, night: 2 } as const;
       const activeRawWorkers = memberConfigs
         .filter((w) => !w.excluded)
-        .map((w, idx) => ({ ...w, plan: schedule[idx], fixedWorkType: fixedShiftMap[w.fixedShift] }));
+        .map((w, idx) => ({
+          ...w,
+          plan: schedule[idx],
+          fixedWorkType: FIXED_SHIFT_MAP[w.fixedShift],
+        }));
 
       const r = await api.post("/api/v1/schedule/preview", {
         groupId: group_id,
@@ -127,12 +219,17 @@ const GroupScheduleEditPage = () => {
     mutationFn: () => {
       const workers = memberConfigs
         .filter((m) => !m.excluded)
-        .map((w, idx) => ({ ...w, plan: schedule[idx] }));
+        .map((w, idx) => ({
+          ...w,
+          plan: schedule[idx],
+          fixedWorkType: FIXED_SHIFT_MAP[w.fixedShift],
+        }));
       return api.post("/api/v1/schedule", {
         groupId: group_id,
         date: date!.format("YYYY-MM-01"),
         selectedDay: [],
         selectedNight: [],
+        pattern: rotationPattern,
         workers,
       });
     },

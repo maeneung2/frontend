@@ -23,7 +23,7 @@ const ScheduleActionBar = ({
   onMemberSetting,
 }: Props) => (
   <Flex gap={2} justify={"flex-end"} mt={1}>
-    <Button onClick={onMemberSetting}>멤버 설정</Button>
+    <Button onClick={onMemberSetting}>스케줄 설정</Button>
     {!isRotation && (
       <>
         {isGenerated && (

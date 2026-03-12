@@ -2,6 +2,7 @@ import { Flex } from "@chakra-ui/react";
 import { Button } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { useNavigate, useParams } from "react-router-dom";
+import dayjs from "dayjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../../api/axios";
 import { useAuthStore } from "../../../store/authStore";
@@ -61,8 +62,10 @@ const GroupScheduleSettingPage = () => {
         deletingId={deletingId}
         onDelete={deleteSchedule}
         onCreateNext={(scheduleId) => {
-          // TODO: 백엔드 연동 후 구현
-          console.log("다음달 생성:", scheduleId);
+          const target = schedules.find((s) => s.scheduleId === scheduleId);
+          if (!target) return;
+          const nextDate = dayjs(target.date).add(1, "month").format("YYYY-MM-01");
+          navigate(`/group/${group_id}/setting/schedule/create`, { state: { date: nextDate } });
         }}
       />
     </Flex>
