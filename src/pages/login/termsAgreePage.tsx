@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Flex } from "@chakra-ui/react";
 import { Button, Checkbox, Divider, Typography } from "antd";
+import { RightOutlined } from "@ant-design/icons";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { api } from "../../api/axios";
@@ -20,6 +21,8 @@ const TermsAgreePage = () => {
     privacy: false,
     marketing: false,
   });
+
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const allRequired = TERMS.filter((t) => t.required).every((t) => checked[t.key]);
   const allChecked = TERMS.every((t) => checked[t.key]);
@@ -56,7 +59,7 @@ const TermsAgreePage = () => {
   };
 
   return (
-    <Flex flexDir={"column"} h={"100%"} p={6} maxW={480} mx={"auto"} gap={4}>
+    <Flex flexDir={"column"} h={"100%"} p={6} maxW={480} mx={"auto"} gap={4} overflowY={"auto"}>
       <Flex flexDir={"column"} align={"center"} gap={1} mb={4}>
         <Title level={2} style={{ margin: 0 }}>
           약관 동의
@@ -83,38 +86,54 @@ const TermsAgreePage = () => {
       <Divider style={{ margin: "4px 0" }} />
 
       {/* 개별 약관 */}
-      <Flex flexDir={"column"} gap={4}>
+      <Flex flexDir={"column"} gap={3}>
         {TERMS.map((term) => (
           <Flex key={term.key} flexDir={"column"} gap={2}>
-            <Checkbox
-              checked={checked[term.key]}
-              onChange={(e) =>
-                setChecked((prev) => ({ ...prev, [term.key]: e.target.checked }))
-              }
-            >
-              <Text>
-                {term.label}
-                {term.required && (
-                  <Text type="danger" style={{ marginLeft: 4 }}>
-                    (필수)
-                  </Text>
-                )}
-              </Text>
-            </Checkbox>
-            <Paragraph
-              type="secondary"
-              style={{
-                fontSize: 12,
-                marginLeft: 24,
-                marginBottom: 0,
-                padding: "8px 12px",
-                background: "#fafafa",
-                borderRadius: 4,
-                border: "1px solid #f0f0f0",
-              }}
-            >
-              {term.content}
-            </Paragraph>
+            <Flex align={"center"} justify={"space-between"}>
+              <Checkbox
+                checked={checked[term.key]}
+                onChange={(e) =>
+                  setChecked((prev) => ({ ...prev, [term.key]: e.target.checked }))
+                }
+              >
+                <Text>
+                  {term.label}
+                  {term.required && (
+                    <Text type="danger" style={{ marginLeft: 4 }}>(필수)</Text>
+                  )}
+                </Text>
+              </Checkbox>
+              <RightOutlined
+                style={{
+                  fontSize: 11,
+                  color: "#999",
+                  transform: expanded[term.key] ? "rotate(90deg)" : "rotate(0deg)",
+                  transition: "transform 0.2s",
+                  cursor: "pointer",
+                  padding: "4px",
+                }}
+                onClick={() =>
+                  setExpanded((prev) => ({ ...prev, [term.key]: !prev[term.key] }))
+                }
+              />
+            </Flex>
+            {expanded[term.key] && (
+              <Paragraph
+                type="secondary"
+                style={{
+                  fontSize: 12,
+                  marginLeft: 24,
+                  marginBottom: 0,
+                  padding: "8px 12px",
+                  background: "#fafafa",
+                  borderRadius: 4,
+                  border: "1px solid #f0f0f0",
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                {term.content}
+              </Paragraph>
+            )}
           </Flex>
         ))}
       </Flex>
