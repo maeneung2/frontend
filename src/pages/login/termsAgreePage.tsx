@@ -5,31 +5,9 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { api } from "../../api/axios";
 import { useAuthStore } from "../../store/authStore";
+import { TERMS } from "../../constants/terms";
 
 const { Title, Text, Paragraph } = Typography;
-
-const TERMS = [
-  {
-    key: "service",
-    label: "서비스 이용약관 동의",
-    required: true,
-    content:
-      "본 서비스를 이용하시려면 아래 약관에 동의하셔야 합니다. 서비스 이용약관은 회사와 이용자 간의 권리·의무 및 책임사항을 규정합니다.",
-  },
-  {
-    key: "privacy",
-    label: "개인정보 수집 및 이용 동의",
-    required: true,
-    content:
-      "수집 항목: 이름, 이메일, 프로필 사진 / 수집 목적: 회원 식별 및 서비스 제공 / 보유 기간: 회원 탈퇴 시까지",
-  },
-  {
-    key: "marketing",
-    label: "마케팅 정보 수신 동의 (선택)",
-    required: false,
-    content: "이벤트, 혜택 등 마케팅 정보를 이메일로 받아보실 수 있습니다.",
-  },
-];
 
 const TermsAgreePage = () => {
   const [searchParams] = useSearchParams();
