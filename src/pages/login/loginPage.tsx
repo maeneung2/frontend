@@ -31,7 +31,7 @@ const LoginPage = () => {
   });
 
   const handleSocialLogin = (provider: string) => {
-    window.location.assign(`${import.meta.env.VITE_API_URL}/oauth/${provider}`);
+    window.location.assign(`${import.meta.env.VITE_API_URL}/api/v1/auth/oauth/${provider}`);
   };
 
   return (
