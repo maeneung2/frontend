@@ -48,4 +48,10 @@ jobs:
           aws-region: ap-northeast-2
 
       - name: Deploy to S3
-        run: aws s3 sync ./dist s3://${{ secrets.AWS_S3_DEV }} --delete
+        run: |
+          aws s3 sync ./dist s3://${{ secrets.AWS_S3_DEV }} \
+            --delete \
+            --cache-control "max-age=31536000,public,immutable" \
+            --exclude "index.html"
+          aws s3 cp ./dist/index.html s3://${{ secrets.AWS_S3_DEV }}/index.html \
+            --cache-control "no-cache, no-store, must-revalidate"
