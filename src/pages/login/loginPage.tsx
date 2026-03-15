@@ -91,7 +91,7 @@ const LoginPage = () => {
         <Text type="secondary" style={{ fontSize: 14 }}>
           계정이 없으신가요?
         </Text>
-        <Link to="/login/sign-up">
+        <Link to="/login/terms">
           <Text style={{ fontSize: 14, color: "#1677ff" }}>회원가입</Text>
         </Link>
       </Flex>

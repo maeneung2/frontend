@@ -12,6 +12,13 @@ const SocialCallbackPage = () => {
   useEffect(() => {
     const accessToken = searchParams.get("accessToken");
     const refreshToken = searchParams.get("refreshToken");
+    const tempToken = searchParams.get("tempToken");
+
+    // 신규 유저 → 약관 동의 페이지로
+    if (tempToken) {
+      navigate(`/login/terms?tempToken=${tempToken}`, { replace: true });
+      return;
+    }
 
     if (!accessToken || !refreshToken) {
       navigate("/login", { replace: true });

@@ -5,6 +5,7 @@ import FindIdPage from "../pages/login/findIdPage.tsx";
 import SignupPage from "../pages/login/signup/signupPage.tsx";
 import ResetPasswordPage from "../pages/login/resetPasswordPage.tsx";
 import SocialCallbackPage from "../pages/login/socialCallbackPage.tsx";
+import TermsAgreePage from "../pages/login/termsAgreePage.tsx";
 import PublicRoute from "../components/PublicRoute.tsx";
 
 const IndexRoute: RouteObject = {
@@ -34,6 +35,10 @@ const IndexRoute: RouteObject = {
     {
       path: "/login/social",
       element: <SocialCallbackPage />,
+    },
+    {
+      path: "/login/terms",
+      element: <TermsAgreePage />,
     },
   ],
 };
