@@ -1,5 +1,5 @@
 import { Flex } from "@chakra-ui/react";
-import { Button } from "antd";
+import { Button, Switch, Typography } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
@@ -9,6 +9,9 @@ import { useAuthStore } from "../../../store/authStore";
 import ScheduleList from "../../../components/schedule/ScheduleList";
 import PageHeader from "../../../components/common/PageHeader";
 import type { ScheduleDetail } from "../../../types/schedule.ts";
+import type { GroupData } from "../../../types/group.ts";
+
+const { Text } = Typography;
 
 const GroupScheduleSettingPage = () => {
   const { group_id } = useParams();
@@ -17,6 +20,18 @@ const GroupScheduleSettingPage = () => {
   const updateUser = useAuthStore((s) => s.updateUser);
 
   const queryKey = ["schedules", group_id];
+  const { data: groupData, isLoading: groupLoading } = useQuery<GroupData>({
+    queryKey: ["group", group_id],
+    queryFn: () => api.get(`/api/v1/group/${group_id}`).then((r) => r.data.data),
+    enabled: !!group_id,
+  });
+  const isOwner = groupData?.owner === useAuthStore.getState().user?.userId;
+  const { mutate: updatePolicy, isPending: policyUpdating } = useMutation({
+    mutationFn: (restBlocksNextDayDay: boolean) =>
+      api.patch(`/api/v1/group/${group_id}`, { restBlocksNextDayDay }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["group", group_id] }),
+    onError: () => alert("팀 근무 규칙 저장에 실패했습니다."),
+  });
 
   const { data: schedules = [], isLoading: loading } = useQuery<ScheduleDetail[]>({
     queryKey,
@@ -54,6 +69,20 @@ const GroupScheduleSettingPage = () => {
           </Button>
         }
       />
+
+      {isOwner && !groupLoading && (
+        <Flex justify="space-between" align="center" p={3} border="1px solid #f0f0f0" borderRadius="8px">
+          <Flex flexDir="column" gap={1}>
+            <Text strong>비번 다음 날 주간 배정 금지</Text>
+            <Text type="secondary" style={{ fontSize: 12 }}>새로 생성하는 초안에 적용되며, 확정본에도 당시 설정이 보존됩니다.</Text>
+          </Flex>
+          <Switch
+            checked={groupData?.restBlocksNextDayDay ?? true}
+            loading={policyUpdating}
+            onChange={(checked) => updatePolicy(checked)}
+          />
+        </Flex>
+      )}
 
       <ScheduleList
         groupId={group_id!}
