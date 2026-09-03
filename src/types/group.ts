@@ -5,5 +5,6 @@ export interface GroupData {
   groupName: string;
   groupProfile?: string;
   owner: string;
+  restBlocksNextDayDay: boolean;
   members: User[];
 }
