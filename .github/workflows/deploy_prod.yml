@@ -1,4 +1,4 @@
-name: deploy dev
+name: deploy prod
 
 on:
   push:
@@ -19,7 +19,9 @@ jobs:
           node-version: "20.17.0"
 
       - name: Install pnpm
-        run: npm install -g pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
 
       - uses: actions/cache@v4
         id: cache
@@ -33,6 +35,8 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install
+      - name: Lint
+        run: pnpm lint
       - name: Build
         run: pnpm build
 
@@ -44,4 +48,10 @@ jobs:
           aws-region: ap-northeast-2
 
       - name: Deploy to S3
-        run: aws s3 sync ./dist s3://${{ secrets.AWS_S3_PROD }} --delete
+        run: |
+          aws s3 sync ./dist s3://${{ secrets.AWS_S3_PROD }} \
+            --delete \
+            --cache-control "max-age=31536000,public,immutable" \
+            --exclude "index.html"
+          aws s3 cp ./dist/index.html s3://${{ secrets.AWS_S3_PROD }}/index.html \
+            --cache-control "no-cache, no-store, must-revalidate"

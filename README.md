@@ -1,73 +1,38 @@
-# React + TypeScript + Vite
+# 비번찾기
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+교대근무 스케줄 자동 생성 서비스
 
-Currently, two official plugins are available:
+## 개요
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+KORAIL 사회복무요원 근무표 작성 방식을 참고해 만든 개인 프로젝트입니다.
+N조 M교대(4조 2교대 주야비휴)처럼 반복되는 형태가 아니라, 매달 다르게
+배치되는 무작위 형태의 근무표를 조건에 맞춰 자동 생성합니다.
 
-## React Compiler
+- 기간: 2026.01 ~ 2026.03
+- 규모: 약 30페이지 규모의 React 웹 서비스
+- 1인 개발 (기획 / 프론트엔드 / 백엔드 / 배포) 
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 스케줄 생성 로직
 
-## Expanding the ESLint configuration
+아래 조건을 모두 만족하는 근무표를 생성합니다.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- 근무일수는 주말을 제외한 기준으로 산정
+- 5일 이상 연속근무 제한
+- 특정일에는 2인 필수 근무 배치
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 기술 스택
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- Frontend: React
+- Backend: (사용 스택 기재)
+- CI/CD: GitHub Actions, AWS
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## 저장소
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+- Frontend: https://github.com/maeneung2/frontend
+- Backend: https://github.com/maeneung2/backend
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 비고
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+실제 6개월치 스케줄을 생성해 근무표 작성에 사용했으며,
+운영 중 발견된 오류를 직접 수정했습니다.
+현재 배포 환경은 운영하지 않습니다.
