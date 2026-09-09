@@ -3,7 +3,7 @@ import { Flex } from "@chakra-ui/react";
 import { Button, Modal, Spin } from "antd";
 import { FullscreenOutlined } from "@ant-design/icons";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import dayjs, { Dayjs } from "dayjs";
+import dayjs, { type Dayjs } from "dayjs";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "../../../api/axios";
 import type {
@@ -14,6 +14,13 @@ import type {
   ShiftMode,
   FixedShift,
 } from "../../../types/schedule.ts";
+import ScheduleHeader from "../../../components/schedule/ScheduleHeader";
+import WorkTypeSelector from "../../../components/schedule/WorkTypeSelector";
+import ScheduleTable from "../../../components/schedule/ScheduleTable";
+import ScheduleActionBar from "../../../components/schedule/ScheduleActionBar";
+import ScheduleFullscreenOverlay from "../../../components/schedule/ScheduleFullscreenOverlay";
+import PageHeader from "../../../components/common/PageHeader";
+import ScheduleSettingModal from "../../../components/schedule/ScheduleSettingModal";
 
 const FIXED_SHIFT_MAP = { none: 0, day: 1, night: 2 } as const;
 const FIXED_SHIFT_REVERSE: FixedShift[] = ["none", "day", "night"];
@@ -46,13 +53,6 @@ function inferRotationStart(plan: WorkType[], pattern: WorkType[]): number {
   }
   return bestStart;
 }
-import ScheduleHeader from "../../../components/schedule/ScheduleHeader";
-import WorkTypeSelector from "../../../components/schedule/WorkTypeSelector";
-import ScheduleTable from "../../../components/schedule/ScheduleTable";
-import ScheduleActionBar from "../../../components/schedule/ScheduleActionBar";
-import ScheduleFullscreenOverlay from "../../../components/schedule/ScheduleFullscreenOverlay";
-import PageHeader from "../../../components/common/PageHeader";
-import ScheduleSettingModal from "../../../components/schedule/ScheduleSettingModal";
 
 const GroupScheduleEditPage = () => {
   const { group_id, schedule_id } = useParams();
@@ -65,6 +65,9 @@ const GroupScheduleEditPage = () => {
   const [selectedType, setSelectedType] = useState<WorkType>(1);
   const [fullscreen, setFullscreen] = useState(false);
 
+  // 편집 모드 전용
+  const [isDirty, setIsDirty] = useState(false);
+
   // 생성 모드 전용
   const initDateFromState = (location.state as { date?: string } | null)?.date;
   const [date, setDate] = useState<Dayjs | null>(
@@ -76,9 +79,7 @@ const GroupScheduleEditPage = () => {
   const [memberConfigs, setMemberConfigs] = useState<MemberConfig[]>([]);
   const [shiftMode, setShiftMode] = useState<ShiftMode>("2교대");
   const [rotationPattern, setRotationPattern] = useState<WorkType[]>([]);
-
-  // 편집 모드 전용
-  const [isDirty, setIsDirty] = useState(false);
+  const [autoInitDone, setAutoInitDone] = useState(false);
 
   // 편집 모드: 기존 스케줄 로드
   const { data: detail, isLoading: detailLoading } = useQuery<ScheduleDetail>({
@@ -89,7 +90,7 @@ const GroupScheduleEditPage = () => {
 
   // 생성 모드: 이전 달 순환패턴 조회
   const prevDate = date ? date.subtract(1, "month") : null;
-  const { data: scheduleList } = useQuery<Array<{ scheduleId: string; date: string }>>({
+  const { data: scheduleList, isSuccess: scheduleListLoaded } = useQuery<Array<{ scheduleId: string; date: string }>>({
     queryKey: ["schedule-list", group_id],
     queryFn: () =>
       api.get("/api/v1/schedule", { params: { groupId: group_id } }).then((r) => r.data.data),
@@ -98,7 +99,7 @@ const GroupScheduleEditPage = () => {
   const prevMonthScheduleId = scheduleList?.find((s) =>
     s.date.startsWith(prevDate?.format("YYYY-MM") ?? "___")
   )?.scheduleId;
-  const { data: prevSchedule } = useQuery<ScheduleDetail>({
+  const { data: prevSchedule, isSuccess: prevScheduleLoaded } = useQuery<ScheduleDetail>({
     queryKey: ["schedule-detail", prevMonthScheduleId],
     queryFn: () => api.get(`/api/v1/schedule/${prevMonthScheduleId}`).then((r) => r.data.data),
     enabled: !!prevMonthScheduleId,
@@ -134,9 +135,8 @@ const GroupScheduleEditPage = () => {
         })
         .then((r) => r.data.data),
     onSuccess: (raw) => {
-      const data: InitData = { ...raw };
-      setInitData(data);
-      setSchedule(data.workers.map((w) => w.plan));
+      setInitData(raw);
+      setSchedule(raw.workers.map((w) => w.plan));
 
       const pattern = prevSchedule?.pattern;
       if (pattern && pattern.length > 0) {
@@ -181,13 +181,15 @@ const GroupScheduleEditPage = () => {
     },
   });
 
-  // 다음달 버튼으로 진입 시 자동 init
+  // 다음달 버튼으로 진입 시 자동 init (prevSchedule 로드 완료 후 실행)
   useEffect(() => {
-    if (initDateFromState && !isEditMode) {
-      initSchedule();
-    }
+    if (!initDateFromState || isEditMode || autoInitDone) return;
+    if (!scheduleListLoaded) return;
+    if (prevMonthScheduleId && !prevScheduleLoaded) return;
+    setAutoInitDone(true);
+    initSchedule();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initSchedule]);
+  }, [initDateFromState, isEditMode, autoInitDone, scheduleListLoaded, prevMonthScheduleId, prevScheduleLoaded]);
 
   const { mutate: generateSchedule, isPending: generateLoading } = useMutation({
     mutationFn: async () => {
@@ -330,6 +332,16 @@ const GroupScheduleEditPage = () => {
     setIsGenerated(false);
   };
 
+  // 생성 모드: 제외 멤버 필터링
+  const activeIndices = memberConfigs.map((m, i) => (!m.excluded ? i : -1)).filter((i) => i !== -1);
+
+  const createInitData: InitData | null = initData
+    ? { ...initData, workers: memberConfigs.filter((m) => !m.excluded) }
+    : null;
+
+  const activeInitData = isEditMode ? editInitData : createInitData;
+  const saveLoading = isEditMode ? saveEditLoading : saveCreateLoading;
+
   // 편집 모드 로딩
   if (isEditMode && detailLoading) {
     return (
@@ -338,22 +350,6 @@ const GroupScheduleEditPage = () => {
       </Flex>
     );
   }
-
-  // 생성 모드: 제외 멤버 필터링
-  const activeIndices = memberConfigs.map((m, i) => (!m.excluded ? i : -1)).filter((i) => i !== -1);
-
-  const createInitData: InitData | null = initData
-    ? {
-        ...initData,
-        workers: memberConfigs.filter((m) => !m.excluded),
-      }
-    : null;
-
-  // const createSchedule = activeIndices.map((i) => schedule[i] ?? []);
-
-  const activeInitData = isEditMode ? editInitData : createInitData;
-  // const activeSchedule = isEditMode ? schedule : createSchedule;
-  const saveLoading = isEditMode ? saveEditLoading : saveCreateLoading;
   const title = isEditMode
     ? `${dayjs(detail?.date).format("YYYY년 MM월")} 스케줄 편집`
     : "스케줄 생성";

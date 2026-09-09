@@ -1,6 +1,7 @@
+import { useEffect } from "react";
 import { Flex } from "@chakra-ui/react";
 import { Form, Input, Button, Typography } from "antd";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { api } from "../../../api/axios";
 import { useAuthStore } from "../../../store/authStore.ts";
@@ -10,6 +11,15 @@ const { Title, Text } = Typography;
 const SignupPage = () => {
   const setLogin = useAuthStore((s) => s.setLogin);
   const navigate = useNavigate();
+  const location = useLocation();
+  const agreedTerms = location.state?.agreedTerms === true;
+
+  // 약관 동의 없이 직접 접근하면 약관 페이지로
+  useEffect(() => {
+    if (!agreedTerms) {
+      navigate("/login/terms", { replace: true });
+    }
+  }, [agreedTerms, navigate]);
 
   const { mutate: signup, isPending } = useMutation({
     mutationFn: ({
@@ -22,7 +32,10 @@ const SignupPage = () => {
       userName: string;
       phone: string;
       password: string;
-    }) => api.post("/api/v1/auth", { id, userName, phone, password }).then((r) => r.data),
+    }) =>
+      api
+        .post("/api/v1/auth", { id, userName, phone, password, agreedTerms: true })
+        .then((r) => r.data),
     onSuccess: ({ accessToken, refreshToken, user }) => {
       setLogin(accessToken, refreshToken, user);
       navigate("/");
@@ -45,6 +58,8 @@ const SignupPage = () => {
     }
     signup(values);
   };
+
+  if (!agreedTerms) return null;
 
   return (
     <Flex flexDir={"column"} justify={"center"} h={"100%"} p={6} maxW={400} mx={"auto"}>
